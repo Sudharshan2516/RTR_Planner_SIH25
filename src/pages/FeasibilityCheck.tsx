@@ -339,8 +339,8 @@ const FeasibilityCheck: React.FC = () => {
                   <option value="green">Green Roof</option>
                 </select>
               </div>
+            </div>
 
-              <div>
             <div className="text-center">
               <button
                 type="submit"
