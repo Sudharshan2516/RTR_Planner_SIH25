@@ -26,35 +26,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (userData) {
-          setUser(userData);
+        if (session?.user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userData) {
+            setUser(userData);
+          }
         }
+      } catch (error) {
+        console.error('Error getting session:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (userData) {
-          setUser(userData);
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userData) {
+            setUser(userData);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -65,58 +73,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string, role = 'user') => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    
-    if (data.user && !error) {
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: data.user.id,
-          email,
-          full_name: fullName,
-          role: role as any,
-          language_preference: 'english'
-        });
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      
+      if (data.user && !error) {
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email,
+            full_name: fullName,
+            role: role as any,
+            language_preference: 'english'
+          });
 
-      // Initialize gamification data
-      await supabase
-        .from('gamification')
-        .insert({
-          user_id: data.user.id,
-          total_points: 0,
-          level: 1,
-          badges: [],
-          achievements: []
-        });
+        // Initialize gamification data
+        await supabase
+          .from('gamification')
+          .insert({
+            user_id: data.user.id,
+            total_points: 0,
+            level: 1,
+            badges: [],
+            achievements: []
+          });
 
-      return { error: profileError };
+        return { error: profileError };
+      }
+      
+      return { error };
+    } catch (error) {
+      return { error };
     }
-    
-    return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return { error: new Error('No user logged in') };
     
-    const { error } = await supabase
-      .from('users')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
-    
-    if (!error) {
-      setUser({ ...user, ...updates });
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+      
+      if (!error) {
+        setUser({ ...user, ...updates });
+      }
+      
+      return { error };
+    } catch (error) {
+      return { error };
     }
-    
-    return { error };
   };
 
   const value = {
