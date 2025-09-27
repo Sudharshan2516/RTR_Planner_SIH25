@@ -47,12 +47,26 @@ const Signup: React.FC = () => {
       return;
     }
     
-    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.role);
-    
-    if (error) {
-      setError(error.message);
-    } else {
-      navigate('/dashboard');
+    try {
+      const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.role);
+      
+      if (error) {
+        if (error.message.includes('User already registered')) {
+          setError('An account with this email already exists. Please sign in instead.');
+        } else if (error.message.includes('Invalid email')) {
+          setError('Please enter a valid email address.');
+        } else {
+          setError(error.message);
+        }
+      } else {
+        // Show success message for email confirmation
+        setError('');
+        alert('Account created successfully! You can now sign in.');
+        navigate('/login');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Signup error:', err);
     }
     
     setLoading(false);
