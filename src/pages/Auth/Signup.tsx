@@ -51,7 +51,9 @@ const Signup: React.FC = () => {
       const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.role);
       
       if (error) {
-        if (error.message.includes('User already registered')) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('fetch')) {
+          setError('Unable to connect to the server. Please check your internet connection or contact support.');
+        } else if (error.message.includes('User already registered')) {
           setError('An account with this email already exists. Please sign in instead.');
         } else if (error.message.includes('Invalid email')) {
           setError('Please enter a valid email address.');
