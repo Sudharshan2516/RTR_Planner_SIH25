@@ -6,7 +6,6 @@ export interface FeasibilityInput {
   numDwellers: number;
   availableSpace: number; // in square meters
   roofType: string;
-  monthlyWaterBill?: number;
 }
 
 export interface HarvestPrediction {

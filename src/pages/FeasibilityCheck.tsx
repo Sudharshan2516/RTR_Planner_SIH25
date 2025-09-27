@@ -17,7 +17,6 @@ const FeasibilityCheck: React.FC = () => {
     numDwellers: 0,
     availableSpace: 0,
     roofType: 'concrete',
-    monthlyWaterBill: 0
   });
   
   const [loading, setLoading] = useState(false);
@@ -28,7 +27,7 @@ const FeasibilityCheck: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'roofArea' || name === 'numDwellers' || name === 'availableSpace' || name === 'monthlyWaterBill'
+      [name]: name === 'roofArea' || name === 'numDwellers' || name === 'availableSpace'
         ? parseFloat(value) || 0
         : value
     }));
@@ -65,7 +64,6 @@ const FeasibilityCheck: React.FC = () => {
             number_of_dwellers: formData.numDwellers,
             available_space: formData.availableSpace,
             roof_type: formData.roofType,
-            monthly_water_bill: formData.monthlyWaterBill,
             status: 'draft'
           });
         
@@ -343,22 +341,6 @@ const FeasibilityCheck: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="monthlyWaterBill" className="block text-sm font-medium text-gray-700 mb-2">
-                  Monthly Water Bill (₹)
-                </label>
-                <input
-                  type="number"
-                  id="monthlyWaterBill"
-                  name="monthlyWaterBill"
-                  min="0"
-                  value={formData.monthlyWaterBill || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 2000"
-                />
-              </div>
-            </div>
-
             <div className="text-center">
               <button
                 type="submit"
