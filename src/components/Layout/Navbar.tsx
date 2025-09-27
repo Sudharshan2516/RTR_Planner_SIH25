@@ -56,7 +56,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <Droplets className="h-8 w-8 text-blue-600" />
-              <span className="font-bold text-xl text-gray-900">AquaHarvest</span>
+              <span className="font-bold text-xl text-green-700">AquaHarvest</span>
             </Link>
           </div>
 
@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 {link.label}
               </Link>
@@ -76,7 +76,7 @@ const Navbar: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setShowLangMenu(!showLangMenu)}
-                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                className="flex items-center space-x-1 text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium"
               >
                 <Globe className="h-4 w-4" />
                 <span>{language === 'english' ? 'EN' : language === 'hindi' ? 'HI' : 'TE'}</span>
@@ -91,7 +91,7 @@ const Navbar: React.FC = () => {
                         setShowLangMenu(false);
                       }}
                       className={`block w-full text-left px-4 py-2 text-sm ${
-                        language === lang ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                        language === lang ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       {lang === 'english' ? 'English' : lang === 'hindi' ? 'हिंदी' : 'తెలుగు'}
@@ -106,7 +106,7 @@ const Navbar: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   <User className="h-4 w-4" />
                   <span>{user.full_name}</span>

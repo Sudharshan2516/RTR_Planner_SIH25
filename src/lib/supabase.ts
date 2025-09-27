@@ -1,16 +1,58 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please check your .env file.');
+// Mock authentication for demo purposes when Supabase is not configured
+const isSupabaseConfigured = supabaseUrl !== 'https://placeholder.supabase.co' && supabaseAnonKey !== 'placeholder-key';
+
+if (!isSupabaseConfigured) {
+  console.warn('Using mock authentication. Configure Supabase for production use.');
 }
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Mock users for demo purposes
+export const mockUsers = [
+  {
+    id: 'admin-123',
+    email: 'admin@aquaharvest.com',
+    password: 'admin123',
+    full_name: 'Admin User',
+    role: 'admin',
+    phone: '+91 9876543210',
+    location: 'Hyderabad',
+    language_preference: 'english',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'user-123',
+    email: 'user@example.com',
+    password: 'user123',
+    full_name: 'John Doe',
+    role: 'user',
+    phone: '+91 9876543211',
+    location: 'Mumbai',
+    language_preference: 'english',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'contractor-123',
+    email: 'contractor@example.com',
+    password: 'contractor123',
+    full_name: 'Mike Wilson',
+    role: 'contractor',
+    phone: '+91 9876543212',
+    location: 'Delhi',
+    language_preference: 'english',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
+export { isSupabaseConfigured };
 
 // Database types
 export interface User {

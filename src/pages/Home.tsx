@@ -37,9 +37,17 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-blue-50 via-white to-green-50 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-green-100 via-blue-50 to-green-200 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
+            {/* Water Droplets Animation */}
+            <div className="mb-8 flex justify-center space-x-4">
+              <div className="w-16 h-16 bg-blue-500 rounded-full opacity-80 animate-bounce" style={{animationDelay: '0s'}}></div>
+              <div className="w-12 h-12 bg-green-500 rounded-full opacity-70 animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              <div className="w-20 h-20 bg-blue-400 rounded-full opacity-60 animate-bounce" style={{animationDelay: '0.4s'}}></div>
+              <div className="w-14 h-14 bg-green-400 rounded-full opacity-75 animate-bounce" style={{animationDelay: '0.6s'}}></div>
+            </div>
+            
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               {t('home.hero.title')}
             </h1>
@@ -49,7 +57,7 @@ const Home: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
                 to="/feasibility"
-                className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+                className="bg-green-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors shadow-lg"
               >
                 {t('home.cta.check')}
               </Link>
@@ -61,18 +69,20 @@ const Home: React.FC = () => {
         </div>
         
         {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-blue-200 rounded-full opacity-20 animate-bounce"></div>
-        <div className="absolute bottom-20 right-10 w-32 h-32 bg-green-200 rounded-full opacity-20 animate-pulse"></div>
+        <div className="absolute top-20 left-10 w-16 h-20 bg-blue-400 rounded-full opacity-30 animate-bounce" style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'}}></div>
+        <div className="absolute top-40 right-20 w-12 h-15 bg-green-400 rounded-full opacity-25 animate-pulse" style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'}}></div>
+        <div className="absolute bottom-32 left-20 w-14 h-18 bg-blue-300 rounded-full opacity-20 animate-bounce" style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '1s'}}></div>
+        <div className="absolute bottom-20 right-10 w-18 h-22 bg-green-300 rounded-full opacity-35 animate-pulse" style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '0.5s'}}></div>
       </div>
 
       {/* Statistics Section */}
-      <div className="bg-blue-600 text-white py-16">
+      <div className="bg-green-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold mb-2">{stat.value}</div>
-                <div className="text-blue-100">{stat.label}</div>
+                <div className="text-3xl md:text-4xl font-bold mb-2 text-white">{stat.value}</div>
+                <div className="text-green-100">{stat.label}</div>
               </div>
             ))}
           </div>

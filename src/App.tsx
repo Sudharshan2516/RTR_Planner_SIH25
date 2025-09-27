@@ -70,12 +70,7 @@ const App: React.FC = () => {
                 
                 <Route path="/admin" element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Panel</h2>
-                        <p className="text-gray-600">Administrative interface coming soon!</p>
-                      </div>
-                    </div>
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } />
                 
@@ -107,5 +102,8 @@ const App: React.FC = () => {
     </Router>
   );
 };
+
+// Import AdminDashboard
+import AdminDashboard from './pages/AdminDashboard';
 
 export default App;
