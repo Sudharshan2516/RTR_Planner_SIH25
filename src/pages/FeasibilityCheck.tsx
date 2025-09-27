@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Calculator, MapPin, Home, Users, Square } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { calculateHarvestPrediction, getStructureRecommendation, calculateCostBenefit, FeasibilityInput } from '../utils/calculations';
+import { asyncProcessor } from '../utils/asyncProcessor';
 import { supabase } from '../lib/supabase';
 
 const FeasibilityCheck: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { addNotification } = useNotifications();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState<FeasibilityInput>({
@@ -38,19 +41,62 @@ const FeasibilityCheck: React.FC = () => {
     setLoading(true);
     
     try {
-      // Calculate predictions
-      const harvestPrediction = calculateHarvestPrediction(formData);
-      const structureRecommendation = getStructureRecommendation(formData, harvestPrediction);
-      const costAnalysis = calculateCostBenefit(formData, structureRecommendation, harvestPrediction);
+      // Submit ML prediction job for async processing
+      const jobId = await asyncProcessor.submitJob('ml_prediction', formData);
       
-      const calculationResults = {
-        input: formData,
-        harvest: harvestPrediction,
-        structure: structureRecommendation,
-        cost: costAnalysis
-      };
-      
-      setResults(calculationResults);
+      // Poll for results
+      const pollResults = setInterval(async () => {
+        const job = await asyncProcessor.getJobStatus(jobId);
+        
+        if (job?.status === 'completed') {
+          clearInterval(pollResults);
+          
+          // Use the ML results to calculate other recommendations
+          const harvestPrediction = job.result;
+          const structureRecommendation = getStructureRecommendation(formData, harvestPrediction);
+          const costAnalysis = calculateCostBenefit(formData, structureRecommendation, harvestPrediction);
+          
+          const calculationResults = {
+            input: formData,
+            harvest: harvestPrediction,
+            structure: structureRecommendation,
+            cost: costAnalysis
+          };
+          
+          setResults(calculationResults);
+          setLoading(false);
+          
+          // Add success notification
+          if (user) {
+            addNotification({
+              title: 'Assessment Complete',
+              message: `Feasibility analysis for ${projectName || 'your project'} is ready!`,
+              type: 'success',
+              actionUrl: '/feasibility',
+              actionText: 'View Results'
+            });
+          }
+          
+        } else if (job?.status === 'failed') {
+          clearInterval(pollResults);
+          setLoading(false);
+          console.error('ML prediction failed:', job.error);
+          
+          // Fallback to synchronous calculation
+          const harvestPrediction = calculateHarvestPrediction(formData);
+          const structureRecommendation = getStructureRecommendation(formData, harvestPrediction);
+          const costAnalysis = calculateCostBenefit(formData, structureRecommendation, harvestPrediction);
+          
+          const calculationResults = {
+            input: formData,
+            harvest: harvestPrediction,
+            structure: structureRecommendation,
+            cost: costAnalysis
+          };
+          
+          setResults(calculationResults);
+        }
+      }, 1000);
       
       // If user is logged in, save the project
       if (user) {
@@ -69,13 +115,30 @@ const FeasibilityCheck: React.FC = () => {
         
         if (error) {
           console.error('Error saving project:', error);
+        } else {
+          addNotification({
+            title: 'Project Saved',
+            message: `Project "${projectName || 'Untitled'}" has been saved to your dashboard.`,
+            type: 'success',
+            actionUrl: '/dashboard',
+            actionText: 'View Dashboard'
+          });
         }
       }
       
     } catch (error) {
       console.error('Calculation error:', error);
-    } finally {
       setLoading(false);
+      
+      if (user) {
+        addNotification({
+          title: 'Calculation Error',
+          message: 'There was an error processing your assessment. Please try again.',
+          type: 'error'
+        });
+      }
+    } finally {
+      // Loading state is handled in the polling logic above
     }
   };
 
