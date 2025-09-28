@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     // Always use mock authentication since Supabase is not properly configured
-    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
+    if (!isSupabaseConfigured) {
       // Mock authentication
       // Check for demo credentials
       let mockUser = null;
@@ -112,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name: string, phone?: string) => {
     // Always use mock signup since Supabase is not properly configured
-    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
+    if (!isSupabaseConfigured) {
       // Mock signup
       const newUser: User = {
         id: `user-${Date.now()}`,
@@ -134,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
+    if (!isSupabaseConfigured) {
       setUser(null);
       localStorage.removeItem('aquaharvest_user');
       return;
@@ -148,7 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return { error: new Error('No user logged in') };
 
-    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
+    if (!isSupabaseConfigured) {
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
       localStorage.setItem('aquaharvest_user', JSON.stringify(updatedUser));
