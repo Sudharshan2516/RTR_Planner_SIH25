@@ -84,63 +84,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Always use mock authentication since Supabase is not properly configured
-    if (!isSupabaseConfigured) {
-      // Mock authentication
-      // Check for demo credentials
-      let mockUser = null;
-      if (email === 'admin@aquaharvest.com' && password === 'admin123') {
-        mockUser = mockUsers.find(u => u.role === 'admin');
-      } else if (email === 'user@example.com' && password === 'user123') {
-        mockUser = mockUsers.find(u => u.role === 'user');
-      } else if (email === 'contractor@example.com' && password === 'contractor123') {
-        mockUser = mockUsers.find(u => u.role === 'contractor');
-      }
-      
-      if (mockUser) {
-        setUser(mockUser);
-        localStorage.setItem('aquaharvest_user', JSON.stringify(mockUser));
-        return { error: null };
-      } else {
-        return { error: { message: 'Invalid login credentials. Please use the demo credentials provided.' } };
-      }
+    // Always use mock authentication - no Supabase calls
+    let mockUser = null;
+    
+    // Check for demo credentials
+    if (email === 'admin@aquaharvest.com' && password === 'admin123') {
+      mockUser = mockUsers.find(u => u.role === 'admin');
+    } else if (email === 'user@example.com' && password === 'user123') {
+      mockUser = mockUsers.find(u => u.role === 'user');
+    } else if (email === 'contractor@example.com' && password === 'contractor123') {
+      mockUser = mockUsers.find(u => u.role === 'contractor');
     }
-
-    // Skip Supabase authentication to prevent fetch errors
-    return { error: { message: 'Please use the demo credentials provided on the login page.' } };
+    
+    if (mockUser) {
+      setUser(mockUser);
+      localStorage.setItem('aquaharvest_user', JSON.stringify(mockUser));
+      return { error: null };
+    } else {
+      return { error: { message: 'Invalid email or password. Please use the demo credentials provided.' } };
+    }
   };
 
   const signUp = async (email: string, password: string, name: string, phone?: string) => {
-    // Always use mock signup since Supabase is not properly configured
-    if (!isSupabaseConfigured) {
-      // Mock signup
-      const newUser: User = {
-        id: `user-${Date.now()}`,
-        email,
-        full_name: name,
-        role: (role as any) || 'user',
-        language_pref: 'english',
-        created_at: new Date().toISOString()
-      };
-      
-      mockUsers.push(newUser);
-      setUser(newUser);
-      localStorage.setItem('aquaharvest_user', JSON.stringify(newUser));
-      return { error: null };
-    }
-
-    // Skip Supabase signup to prevent fetch errors
-    return { error: { message: 'Please use the demo login credentials instead.' } };
+    // Mock signup - no Supabase calls
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      email,
+      full_name: name,
+      role: 'user',
+      language_preference: 'english',
+      created_at: new Date().toISOString()
+    };
+    
+    mockUsers.push(newUser);
+    setUser(newUser);
+    localStorage.setItem('aquaharvest_user', JSON.stringify(newUser));
+    return { error: null };
   };
 
   const signOut = async () => {
-    if (!isSupabaseConfigured) {
-      setUser(null);
-      localStorage.removeItem('aquaharvest_user');
-      return;
-    }
-
-    // Skip Supabase signout to prevent fetch errors
+    // Mock signout - no Supabase calls
     setUser(null);
     localStorage.removeItem('aquaharvest_user');
   };
@@ -148,14 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return { error: new Error('No user logged in') };
 
-    if (!isSupabaseConfigured) {
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
-      localStorage.setItem('aquaharvest_user', JSON.stringify(updatedUser));
-      return { error: null };
-    }
-
-    // Skip Supabase update to prevent fetch errors
+    // Mock profile update - no Supabase calls
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
     localStorage.setItem('aquaharvest_user', JSON.stringify(updatedUser));
