@@ -81,14 +81,50 @@ const GISMap: React.FC<GISMapProps> = ({
   }, [showRainfallData, showSoilData]);
 
   // -------------------- Map Click Handler --------------------
-  const handleMapClick = (e: L.LeafletMouseEvent) => {
+  const handleMapClick = async (e: L.LeafletMouseEvent) => {
     const { lat, lng } = e.latlng;
     setSelectedLocation({ lat, lng });
+    
+    // Update map center to clicked location
+    setMapCenter([lat, lng]);
 
     if (onLocationSelect) {
-      const mockAddress = `Location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      onLocationSelect(lat, lng, mockAddress);
+      try {
+        // Try to get address from reverse geocoding (mock implementation)
+        const address = await reverseGeocode(lat, lng);
+        onLocationSelect(lat, lng, address);
+      } catch (error) {
+        const mockAddress = `Location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        onLocationSelect(lat, lng, mockAddress);
+      }
     }
+  };
+  
+  // Mock reverse geocoding function
+  const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
+    // In a real app, you'd use a geocoding service like Nominatim or Google Maps
+    // For demo purposes, we'll return a mock address based on coordinates
+    const cities = [
+      { name: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
+      { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
+      { name: 'Delhi', lat: 28.7041, lng: 77.1025 },
+      { name: 'Bangalore', lat: 12.9716, lng: 77.5946 },
+      { name: 'Chennai', lat: 13.0827, lng: 80.2707 }
+    ];
+    
+    // Find closest city
+    let closestCity = cities[0];
+    let minDistance = Math.sqrt(Math.pow(lat - cities[0].lat, 2) + Math.pow(lng - cities[0].lng, 2));
+    
+    for (const city of cities) {
+      const distance = Math.sqrt(Math.pow(lat - city.lat, 2) + Math.pow(lng - city.lng, 2));
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestCity = city;
+      }
+    }
+    
+    return `${closestCity.name}, India`;
   };
 
   // -------------------- Custom Icons --------------------

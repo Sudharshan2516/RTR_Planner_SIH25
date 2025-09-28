@@ -44,30 +44,72 @@ const FeasibilityCheck: React.FC = () => {
   const handleLocationSelect = (lat: number, lng: number, address: string) => {
     setCoordinates({ lat, lng });
     setFormData(prev => ({ ...prev, location: address }));
+    
+    if (user) {
+      addNotification({
+        title: 'Location Selected',
+        message: `Location updated to: ${address}`,
+        type: 'info'
+      });
+    }
   };
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
+      setLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setCoordinates({ lat: latitude, lng: longitude });
           setFormData(prev => ({ 
             ...prev, 
-            location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` 
+            location: `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})` 
           }));
+          setLoading(false);
+          
+          if (user) {
+            addNotification({
+              title: 'Location Updated',
+              message: 'Your current location has been detected successfully.',
+              type: 'success'
+            });
+          }
         },
         (error) => {
           console.error('Error getting location:', error);
+          setLoading(false);
+          
+          let errorMessage = 'Unable to get your current location. Please enter manually.';
+          if (error.code === error.PERMISSION_DENIED) {
+            errorMessage = 'Location access denied. Please allow location access and try again.';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMessage = 'Location information unavailable. Please enter manually.';
+          } else if (error.code === error.TIMEOUT) {
+            errorMessage = 'Location request timed out. Please try again.';
+          }
+          
           if (user) {
             addNotification({
               title: 'Location Error',
-              message: 'Unable to get your current location. Please enter manually.',
+              message: errorMessage,
               type: 'warning'
             });
           }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
         }
       );
+    } else {
+      if (user) {
+        addNotification({
+          title: 'Geolocation Not Supported',
+          message: 'Your browser does not support geolocation. Please enter location manually.',
+          type: 'warning'
+        });
+      }
     }
   };
 

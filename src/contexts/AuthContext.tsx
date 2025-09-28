@@ -86,14 +86,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     if (!isSupabaseConfigured) {
       // Mock authentication
-      const mockUser = mockUsers.find(u => u.email === email);
-      const validPasswords = ['admin123', 'user123', 'contractor123', 'demo123'];
-      if (mockUser && validPasswords.includes(password)) {
+      // Check for demo credentials
+      let mockUser = null;
+      if (email === 'admin@aquaharvest.com' && password === 'admin123') {
+        mockUser = mockUsers.find(u => u.role === 'admin');
+      } else if (email === 'user@example.com' && password === 'user123') {
+        mockUser = mockUsers.find(u => u.role === 'user');
+      } else if (email === 'contractor@example.com' && password === 'contractor123') {
+        mockUser = mockUsers.find(u => u.role === 'contractor');
+      }
+      
+      if (mockUser) {
         setUser(mockUser);
         localStorage.setItem('aquaharvest_user', JSON.stringify(mockUser));
         return { error: null };
       } else {
-        return { error: { message: 'Invalid credentials. Use admin123, user123, or contractor123 as password.' } };
+        return { error: { message: 'Invalid login credentials. Please use the demo credentials provided.' } };
       }
     }
 

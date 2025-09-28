@@ -87,14 +87,17 @@ export const mockUsers: User[] = [
     full_name: 'Admin User',
     email: 'admin@aquaharvest.com',
     role: 'admin',
+    phone: '+91 9876543210',
+    location: 'Hyderabad',
     language_preference: 'english',
     created_at: new Date().toISOString()
   },
   {
     id: 'user-1',
     full_name: 'John Doe',
-    email: 'john@example.com',
+    email: 'user@example.com',
     phone: '+91 9876543210',
+    location: 'Mumbai',
     role: 'user',
     language_preference: 'english',
     created_at: new Date().toISOString()
@@ -102,8 +105,9 @@ export const mockUsers: User[] = [
   {
     id: 'contractor-1',
     full_name: 'Mike Wilson',
-    email: 'mike@contractor.com',
+    email: 'contractor@example.com',
     phone: '+91 9876543211',
+    location: 'Delhi',
     role: 'contractor',
     language_preference: 'english',
     created_at: new Date().toISOString()
