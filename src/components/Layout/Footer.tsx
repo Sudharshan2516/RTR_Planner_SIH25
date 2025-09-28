@@ -4,13 +4,23 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-gradient-to-r from-gray-900 to-green-900 text-white relative overflow-hidden">
+      {/* Water droplet pattern in footer */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-4 left-1/4 w-8 h-12 bg-white water-droplet"></div>
+        <div className="absolute top-12 right-1/3 w-6 h-10 bg-white water-droplet"></div>
+        <div className="absolute bottom-8 left-1/2 w-10 h-14 bg-white water-droplet"></div>
+        <div className="absolute bottom-4 right-1/4 w-4 h-8 bg-white water-droplet"></div>
+      </div>
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <Droplets className="h-8 w-8 text-blue-400" />
+              <div className="w-8 h-10 bg-blue-400 water-droplet flex items-center justify-center">
+                <Droplets className="h-5 w-5 text-white" />
+              </div>
               <span className="font-bold text-xl">AquaHarvest</span>
             </div>
             <p className="text-gray-400 text-sm">

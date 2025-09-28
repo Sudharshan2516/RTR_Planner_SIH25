@@ -280,10 +280,27 @@ const FeasibilityCheck: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 relative overflow-hidden">
+      {/* Background water droplets */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-8 h-12 bg-blue-200 opacity-20 animate-float" 
+             style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'}}>
+        </div>
+        <div className="absolute top-40 right-20 w-6 h-10 bg-green-200 opacity-15 animate-float" 
+             style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '1s'}}>
+        </div>
+        <div className="absolute bottom-32 left-1/4 w-10 h-14 bg-blue-100 opacity-25 animate-float" 
+             style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '2s'}}>
+        </div>
+      </div>
+      
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <Calculator className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+          {/* Water droplet with calculator icon */}
+          <div className="relative mx-auto mb-4 w-16 h-20 bg-gradient-to-b from-blue-500 to-blue-600 flex items-center justify-center" 
+               style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'}}>
+            <Calculator className="h-8 w-8 text-white" />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Rainwater Harvesting Feasibility Check
           </h1>

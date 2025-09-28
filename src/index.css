@@ -1,3 +1,67 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom animations for water droplets */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}
+
+@keyframes droplet-fall {
+  0% {
+    transform: translateY(-100px) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(200px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes water-seep {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-droplet-fall {
+  animation: droplet-fall 3s ease-in infinite;
+}
+
+.animate-water-seep {
+  animation: water-seep 2s ease-in-out infinite;
+}
+
+/* Water droplet shapes */
+.water-droplet {
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+}
+
+.water-droplet-large {
+  border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+}
+
+.water-droplet-small {
+  border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%;
+}
