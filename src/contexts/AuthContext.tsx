@@ -5,7 +5,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string, role?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string, phone?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<{ error: any }>;
 }
@@ -27,8 +27,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initAuth = async () => {
       if (!isSupabaseConfigured) {
-        // Check for stored mock user
-        const storedUser = localStorage.getItem('mockUser');
+        // Use mock authentication
+        const storedUser = localStorage.getItem('rainshare_user');
         if (storedUser) {
           try {
             setUser(JSON.parse(storedUser));
@@ -42,7 +42,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
         if (session?.user) {
           const { data: userData } = await supabase
             .from('users')
@@ -66,38 +65,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            let { data: userData, error: fetchError } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (userData && !fetchError) {
-              setUser(userData);
-            } else if (fetchError && fetchError.code === 'PGRST116') {
-              // User profile doesn't exist, create it
-              const userMetadata = session.user.user_metadata;
-              await createUserProfile(
-                session.user.id,
-                session.user.email || '',
-                userMetadata.full_name || 'User',
-                userMetadata.role || 'user'
-              );
-              
-              // Fetch the newly created profile
-              const { data: newUserData } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-              
-              if (newUserData) {
-                setUser(newUserData);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching user data:', error);
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userData) {
+            setUser(userData);
           }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -111,14 +86,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     if (!isSupabaseConfigured) {
       // Mock authentication
-      const mockUser = mockUsers.find(u => u.email === email && u.password === password);
-      if (mockUser) {
-        const { password: _, ...userWithoutPassword } = mockUser;
-        setUser(userWithoutPassword as User);
-        localStorage.setItem('mockUser', JSON.stringify(userWithoutPassword));
+      const mockUser = mockUsers.find(u => u.email === email);
+      if (mockUser && password === 'demo123') {
+        setUser(mockUser);
+        localStorage.setItem('rainshare_user', JSON.stringify(mockUser));
         return { error: null };
       } else {
-        return { error: { message: 'Invalid email or password' } };
+        return { error: { message: 'Invalid credentials. Use demo123 as password.' } };
       }
     }
 
@@ -130,99 +104,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role = 'user') => {
+  const signUp = async (email: string, password: string, name: string, phone?: string) => {
     if (!isSupabaseConfigured) {
       // Mock signup
-      const existingUser = mockUsers.find(u => u.email === email);
-      if (existingUser) {
-        return { error: { message: 'User already exists' } };
-      }
-      
-      const newUser = {
-        id: `mock-${Date.now()}`,
+      const newUser: User = {
+        id: `user-${Date.now()}`,
+        name,
         email,
-        full_name: fullName,
-        role: role as any,
-        phone: '',
-        location: '',
-        language_preference: 'english' as any,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        phone,
+        role: 'registered',
+        language_pref: 'english',
+        created_at: new Date().toISOString()
       };
       
-      mockUsers.push({ ...newUser, password } as any);
+      mockUsers.push(newUser);
+      setUser(newUser);
+      localStorage.setItem('rainshare_user', JSON.stringify(newUser));
       return { error: null };
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
+      const { data, error } = await supabase.auth.signUp({
+        email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-            role: role
-          }
+          data: { name, phone }
         }
       });
-      
+
       if (data.user && !error) {
-        // Wait for the user to be confirmed before creating profile
-        if (data.user.email_confirmed_at || data.user.confirmed_at) {
-          await createUserProfile(data.user.id, email, fullName, role);
-        }
-      }
-      
-      return { error };
-    } catch (error) {
-      return { error };
-    }
-  };
-
-  const createUserProfile = async (userId: string, email: string, fullName: string, role: string) => {
-    try {
-      // Create user profile
-      const { error: profileError } = await supabase
-        .from('users')
-        .upsert({
-          id: userId,
+        // Create user profile
+        await supabase.from('users').insert({
+          id: data.user.id,
+          name,
           email,
-          full_name: fullName,
-          role: role as any,
-          language_preference: 'english'
+          phone,
+          role: 'registered',
+          language_pref: 'english'
         });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        return;
       }
 
-      // Initialize gamification data
-      const { error: gamificationError } = await supabase
-        .from('gamification')
-        .upsert({
-          user_id: userId,
-          total_points: 0,
-          level: 1,
-          badges: [],
-          achievements: [],
-          water_saved_liters: 0,
-          money_saved: 0,
-          environmental_impact_score: 0
-        });
-
-      if (gamificationError) {
-        console.error('Gamification initialization error:', gamificationError);
-      }
+      return { error };
     } catch (error) {
-      console.error('Error creating user profile:', error);
+      return { error };
     }
   };
 
   const signOut = async () => {
     if (!isSupabaseConfigured) {
       setUser(null);
-      localStorage.removeItem('mockUser');
+      localStorage.removeItem('rainshare_user');
       return;
     }
 
@@ -235,17 +166,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return { error: new Error('No user logged in') };
-    
+
+    if (!isSupabaseConfigured) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem('rainshare_user', JSON.stringify(updatedUser));
+      return { error: null };
+    }
+
     try {
       const { error } = await supabase
         .from('users')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq('id', user.id);
-      
+
       if (!error) {
         setUser({ ...user, ...updates });
       }
-      
+
       return { error };
     } catch (error) {
       return { error };

@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Droplets, Menu, X, Globe, User, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import NotificationPanel from '../NotificationPanel';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +21,7 @@ const Navbar: React.FC = () => {
   const getNavLinks = () => {
     const baseLinks = [
       { to: '/', label: t('nav.home') },
-      { to: '/feasibility', label: t('nav.feasibility') }
+      { to: '/quick-check', label: t('nav.quick_check') }
     ];
 
     if (!user) {
@@ -31,20 +30,15 @@ const Navbar: React.FC = () => {
 
     const userLinks = [
       { to: '/projects', label: t('nav.projects') },
-      { to: '/dashboard', label: t('nav.dashboard') },
-      { to: '/reports', label: t('nav.reports') }
+      { to: '/profile', label: t('nav.profile') }
     ];
 
-    if (user.role === 'user') {
-      userLinks.push({ to: '/leaderboard', label: t('nav.leaderboard') });
+    if (user.role === 'contractor') {
+      userLinks.push({ to: '/contractor', label: t('nav.contractor') });
     }
 
     if (user.role === 'admin') {
-      userLinks.push({ to: '/admin', label: 'Admin Panel' });
-    }
-
-    if (user.role === 'contractor') {
-      userLinks.push({ to: '/contractor', label: 'Contractor Dashboard' });
+      userLinks.push({ to: '/admin', label: t('nav.admin') });
     }
 
     return [...baseLinks, ...userLinks];
@@ -56,8 +50,8 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <Droplets className="h-8 w-8 text-blue-600" />
-              <span className="font-bold text-xl text-green-700">AquaHarvest</span>
+              <Droplets className="h-8 w-8 text-green-600" />
+              <span className="font-bold text-xl text-green-700">RainShare</span>
             </Link>
           </div>
 
@@ -80,7 +74,7 @@ const Navbar: React.FC = () => {
                 className="flex items-center space-x-1 text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium"
               >
                 <Globe className="h-4 w-4" />
-                <span>{language === 'english' ? 'EN' : language === 'hindi' ? 'HI' : 'TE'}</span>
+                <span>{language === 'english' ? 'EN' : language === 'hindi' ? 'हि' : 'తె'}</span>
               </button>
               {showLangMenu && (
                 <div className="absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg py-1 z-50">
@@ -102,9 +96,6 @@ const Navbar: React.FC = () => {
               )}
             </div>
 
-            {/* Notifications */}
-            {user && <NotificationPanel />}
-
             {/* User Menu */}
             {user ? (
               <div className="relative">
@@ -113,7 +104,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   <User className="h-4 w-4" />
-                  <span>{user.full_name}</span>
+                  <span>{user.name}</span>
                 </button>
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
@@ -122,7 +113,7 @@ const Navbar: React.FC = () => {
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      Profile Settings
+                      {t('nav.profile')}
                     </Link>
                     <button
                       onClick={handleSignOut}
@@ -140,13 +131,13 @@ const Navbar: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   {t('nav.login')}
                 </Link>
                 <Link
                   to="/signup"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
                 >
                   {t('nav.signup')}
                 </Link>
@@ -158,7 +149,7 @@ const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-blue-600 focus:outline-none"
+              className="text-gray-700 hover:text-green-600 focus:outline-none"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -173,7 +164,7 @@ const Navbar: React.FC = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="block text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium"
+                  className="block text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-base font-medium"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
@@ -183,14 +174,14 @@ const Navbar: React.FC = () => {
                 <>
                   <Link
                     to="/login"
-                    className="block text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium"
+                    className="block text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-base font-medium"
                     onClick={() => setIsOpen(false)}
                   >
                     {t('nav.login')}
                   </Link>
                   <Link
                     to="/signup"
-                    className="block bg-blue-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-blue-700"
+                    className="block bg-green-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-green-700"
                     onClick={() => setIsOpen(false)}
                   >
                     {t('nav.signup')}
@@ -200,7 +191,7 @@ const Navbar: React.FC = () => {
               {user && (
                 <button
                   onClick={handleSignOut}
-                  className="block w-full text-left text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium"
+                  className="block w-full text-left text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-base font-medium"
                 >
                   {t('nav.logout')}
                 </button>

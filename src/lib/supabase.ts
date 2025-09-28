@@ -1,128 +1,101 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
-
-// Mock authentication for demo purposes when Supabase is not configured
-const isSupabaseConfigured = supabaseUrl !== 'https://placeholder.supabase.co' && supabaseAnonKey !== 'placeholder-key';
-
-if (!isSupabaseConfigured) {
-  console.warn('Using mock authentication. Configure Supabase for production use.');
-}
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://demo.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'demo-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Mock users for demo purposes
-export const mockUsers = [
-  {
-    id: 'admin-123',
-    email: 'admin@aquaharvest.com',
-    password: 'admin123',
-    full_name: 'Admin User',
-    role: 'admin',
-    phone: '+91 9876543210',
-    location: 'Hyderabad',
-    language_preference: 'english',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'user-123',
-    email: 'user@example.com',
-    password: 'user123',
-    full_name: 'John Doe',
-    role: 'user',
-    phone: '+91 9876543211',
-    location: 'Mumbai',
-    language_preference: 'english',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'contractor-123',
-    email: 'contractor@example.com',
-    password: 'contractor123',
-    full_name: 'Mike Wilson',
-    role: 'contractor',
-    phone: '+91 9876543212',
-    location: 'Delhi',
-    language_preference: 'english',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-export { isSupabaseConfigured };
-
-// Database types
+// Database Types
 export interface User {
   id: string;
+  name: string;
   email: string;
-  full_name: string;
-  role: 'guest' | 'user' | 'contractor' | 'admin';
   phone?: string;
-  location?: string;
-  language_preference: 'english' | 'hindi' | 'telugu';
-  profile_image_url?: string;
+  role: 'guest' | 'registered' | 'contractor' | 'admin';
+  language_pref: 'english' | 'hindi' | 'telugu';
   created_at: string;
-  updated_at: string;
 }
 
 export interface Project {
   id: string;
   user_id: string;
-  project_name: string;
-  roof_area: number;
-  location: string;
-  latitude?: number;
-  longitude?: number;
-  number_of_dwellers: number;
-  available_space: number;
-  roof_type: string;
-  current_water_source?: string;
-  monthly_water_bill?: number;
-  status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'completed';
-  verification_status: 'pending' | 'verified' | 'rejected';
-  assigned_contractor_id?: string;
+  name: string;
+  address: string;
+  lat: number;
+  lon: number;
+  roof_area_m2: number;
+  roof_type: 'rcc' | 'metal' | 'tile' | 'other';
+  open_space_m2: number;
+  dwellers: number;
+  status: 'draft' | 'submitted' | 'predicted' | 'verified' | 'rejected';
+  verified: boolean;
   created_at: string;
-  updated_at: string;
 }
 
-export interface MLPrediction {
+export interface Prediction {
   id: string;
   project_id: string;
-  annual_rainfall: number;
-  predicted_harvest_liters: number;
-  runoff_coefficient: number;
-  water_quality_score: number;
+  input_json: any;
+  output_json: any;
+  model_version: string;
+  used_fallback: boolean;
   confidence_score: number;
   created_at: string;
 }
 
-export interface StructureRecommendation {
+export interface Photo {
   id: string;
   project_id: string;
-  structure_type: string;
-  tank_capacity: number;
-  estimated_cost: number;
-  installation_time_days: number;
-  maintenance_frequency: string;
-  efficiency_rating: number;
-  dimensions: Record<string, any>;
-  materials: Record<string, any>;
-  created_at: string;
+  storage_url: string;
+  meta_json: any;
+  uploaded_at: string;
 }
 
-export interface GamificationData {
+export interface Contractor {
   id: string;
   user_id: string;
-  total_points: number;
-  level: number;
-  badges: string[];
-  achievements: string[];
-  water_saved_liters: number;
-  money_saved: number;
-  environmental_impact_score: number;
-  created_at: string;
-  updated_at: string;
+  business_name: string;
+  regions: string[];
+  rating: number;
+  verified: boolean;
 }
+
+export interface Gamification {
+  id: string;
+  user_id: string;
+  points: number;
+  badges: string[];
+  last_updated: string;
+}
+
+// Mock data for demo
+export const mockUsers: User[] = [
+  {
+    id: 'admin-1',
+    name: 'Admin User',
+    email: 'admin@rainshare.com',
+    role: 'admin',
+    language_pref: 'english',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'user-1',
+    name: 'John Doe',
+    email: 'john@example.com',
+    phone: '+91 9876543210',
+    role: 'registered',
+    language_pref: 'english',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'contractor-1',
+    name: 'Mike Wilson',
+    email: 'mike@contractor.com',
+    phone: '+91 9876543211',
+    role: 'contractor',
+    language_pref: 'english',
+    created_at: new Date().toISOString()
+  }
+];
+
+export const isSupabaseConfigured = supabaseUrl !== 'https://demo.supabase.co';
