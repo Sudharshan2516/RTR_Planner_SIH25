@@ -5,7 +5,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, name: string, phone?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string, role?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<{ error: any }>;
 }
@@ -87,12 +87,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isSupabaseConfigured) {
       // Mock authentication
       const mockUser = mockUsers.find(u => u.email === email);
-      if (mockUser && password === 'demo123') {
+      const validPasswords = ['admin123', 'user123', 'contractor123', 'demo123'];
+      if (mockUser && validPasswords.includes(password)) {
         setUser(mockUser);
-        localStorage.setItem('rainshare_user', JSON.stringify(mockUser));
+        localStorage.setItem('aquaharvest_user', JSON.stringify(mockUser));
         return { error: null };
       } else {
-        return { error: { message: 'Invalid credentials. Use demo123 as password.' } };
+        return { error: { message: 'Invalid credentials. Use admin123, user123, or contractor123 as password.' } };
       }
     }
 
@@ -109,17 +110,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Mock signup
       const newUser: User = {
         id: `user-${Date.now()}`,
-        name,
         email,
-        phone,
-        role: 'registered',
+        full_name: name,
+        role: (role as any) || 'user',
         language_pref: 'english',
         created_at: new Date().toISOString()
       };
       
       mockUsers.push(newUser);
       setUser(newUser);
-      localStorage.setItem('rainshare_user', JSON.stringify(newUser));
+      localStorage.setItem('aquaharvest_user', JSON.stringify(newUser));
       return { error: null };
     }
 
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     if (!isSupabaseConfigured) {
       setUser(null);
-      localStorage.removeItem('rainshare_user');
+      localStorage.removeItem('aquaharvest_user');
       return;
     }
 
@@ -170,7 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isSupabaseConfigured) {
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
-      localStorage.setItem('rainshare_user', JSON.stringify(updatedUser));
+      localStorage.setItem('aquaharvest_user', JSON.stringify(updatedUser));
       return { error: null };
     }
 

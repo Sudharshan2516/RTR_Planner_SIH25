@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Droplets, Menu, X, Globe, User, LogOut } from 'lucide-react';
+import { Droplets, Menu, X, Globe, User, LogOut, Bell } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import NotificationPanel from '../NotificationPanel';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,7 +22,7 @@ const Navbar: React.FC = () => {
   const getNavLinks = () => {
     const baseLinks = [
       { to: '/', label: t('nav.home') },
-      { to: '/quick-check', label: t('nav.quick_check') }
+      { to: '/feasibility', label: t('nav.quick_check') }
     ];
 
     if (!user) {
@@ -51,7 +52,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <Droplets className="h-8 w-8 text-green-600" />
-              <span className="font-bold text-xl text-green-700">RainShare</span>
+              <span className="font-bold text-xl text-green-700">AquaHarvest</span>
             </Link>
           </div>
 
@@ -96,6 +97,9 @@ const Navbar: React.FC = () => {
               )}
             </div>
 
+            {/* Notifications */}
+            {user && <NotificationPanel />}
+
             {/* User Menu */}
             {user ? (
               <div className="relative">
@@ -104,7 +108,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   <User className="h-4 w-4" />
-                  <span>{user.name}</span>
+                  <span>{user.full_name}</span>
                 </button>
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
@@ -114,6 +118,20 @@ const Navbar: React.FC = () => {
                       onClick={() => setShowUserMenu(false)}
                     >
                       {t('nav.profile')}
+                    </Link>
+                    <Link
+                      to="/dashboard"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/reports"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Reports
                     </Link>
                     <button
                       onClick={handleSignOut}

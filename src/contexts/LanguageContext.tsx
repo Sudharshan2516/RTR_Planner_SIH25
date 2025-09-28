@@ -237,12 +237,12 @@ export const useLanguage = () => {
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem('rainshare_language');
+    const saved = localStorage.getItem('aquaharvest_language');
     return (saved as Language) || 'english';
   });
 
   useEffect(() => {
-    localStorage.setItem('rainshare_language', language);
+    localStorage.setItem('aquaharvest_language', language);
     document.documentElement.lang = language === 'english' ? 'en' : language === 'hindi' ? 'hi' : 'te';
   }, [language]);
 

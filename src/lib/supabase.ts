@@ -8,28 +8,34 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Database Types
 export interface User {
   id: string;
-  name: string;
   email: string;
+  full_name: string;
+  role: 'guest' | 'user' | 'contractor' | 'admin';
   phone?: string;
-  role: 'guest' | 'registered' | 'contractor' | 'admin';
-  language_pref: 'english' | 'hindi' | 'telugu';
+  location?: string;
+  language_preference?: 'english' | 'hindi' | 'telugu';
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Project {
   id: string;
   user_id: string;
-  name: string;
-  address: string;
-  lat: number;
-  lon: number;
-  roof_area_m2: number;
+  project_name: string;
+  roof_area: number;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  number_of_dwellers: number;
+  available_space: number;
   roof_type: 'rcc' | 'metal' | 'tile' | 'other';
-  open_space_m2: number;
-  dwellers: number;
-  status: 'draft' | 'submitted' | 'predicted' | 'verified' | 'rejected';
-  verified: boolean;
+  current_water_source?: string;
+  monthly_water_bill?: number;
+  status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'completed';
+  verification_status: 'pending' | 'verified' | 'rejected';
+  assigned_contractor_id?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Prediction {
@@ -63,37 +69,43 @@ export interface Contractor {
 export interface Gamification {
   id: string;
   user_id: string;
-  points: number;
+  total_points: number;
+  level: number;
   badges: string[];
-  last_updated: string;
+  achievements: string[];
+  water_saved_liters: number;
+  money_saved: number;
+  environmental_impact_score: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Mock data for demo
 export const mockUsers: User[] = [
   {
     id: 'admin-1',
-    name: 'Admin User',
-    email: 'admin@rainshare.com',
+    full_name: 'Admin User',
+    email: 'admin@aquaharvest.com',
     role: 'admin',
-    language_pref: 'english',
+    language_preference: 'english',
     created_at: new Date().toISOString()
   },
   {
     id: 'user-1',
-    name: 'John Doe',
+    full_name: 'John Doe',
     email: 'john@example.com',
     phone: '+91 9876543210',
-    role: 'registered',
-    language_pref: 'english',
+    role: 'user',
+    language_preference: 'english',
     created_at: new Date().toISOString()
   },
   {
     id: 'contractor-1',
-    name: 'Mike Wilson',
+    full_name: 'Mike Wilson',
     email: 'mike@contractor.com',
     phone: '+91 9876543211',
     role: 'contractor',
-    language_pref: 'english',
+    language_preference: 'english',
     created_at: new Date().toISOString()
   }
 ];
