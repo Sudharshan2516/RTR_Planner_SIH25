@@ -145,8 +145,6 @@ const Home: React.FC = () => {
                 {t('home.cta.learn')}
               </button>
             </div>
-          </div>
-        </div>
         
         {/* Floating Water Droplets Around the Page */}
         <div className="absolute top-20 left-10 w-12 h-16 bg-blue-400 opacity-30 animate-bounce" 
@@ -174,6 +172,8 @@ const Home: React.FC = () => {
                animationDelay: '1.5s'
              }}>
         </div>
+      </div>
+      </div>
       </div>
 
       {/* Statistics Section */}
