@@ -16,6 +16,8 @@ import FeasibilityCheck from './pages/FeasibilityCheck';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import AdminDashboard from './pages/AdminDashboard';
+import Projects from './pages/Projects';
+import Profile from './pages/Profile';
 
 const App: React.FC = () => {
   return (
@@ -48,12 +50,13 @@ const App: React.FC = () => {
                   {/* Placeholder routes for other pages */}
                   <Route path="/projects" element={
                     <ProtectedRoute>
-                      <div className="min-h-screen flex items-center justify-center">
-                        <div className="text-center">
-                          <h2 className="text-2xl font-bold text-gray-900 mb-4">My Projects</h2>
-                          <p className="text-gray-600">Project management interface coming soon!</p>
-                        </div>
-                      </div>
+                      <Projects />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
                     </ProtectedRoute>
                   } />
                   

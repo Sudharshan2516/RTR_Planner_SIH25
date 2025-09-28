@@ -8,6 +8,7 @@ import { calculateHarvestPrediction, getStructureRecommendation, calculateCostBe
 import { asyncProcessor } from '../utils/asyncProcessor';
 import { supabase } from '../lib/supabase';
 import GISMap from '../components/GISMap';
+import HydrogeologyInfo from '../components/HydrogeologyInfo';
 
 const FeasibilityCheck: React.FC = () => {
   const { user } = useAuth();
@@ -637,6 +638,17 @@ const FeasibilityCheck: React.FC = () => {
         </div>
 
         {renderResults()}
+        
+        {/* Hydrogeology and Rainfall Information */}
+        {formData.location && (
+          <div className="mt-12">
+            <HydrogeologyInfo
+              latitude={coordinates.lat}
+              longitude={coordinates.lng}
+              location={formData.location}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

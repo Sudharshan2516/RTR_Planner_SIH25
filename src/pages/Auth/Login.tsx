@@ -141,40 +141,6 @@ const Login: React.FC = () => {
             </Link>
           </div>
         </form>
-        
-        {/* Demo Login Options */}
-        <div className="mt-6 border-t pt-6">
-          <p className="text-center text-sm text-gray-500 mb-4">Demo Login Options:</p>
-          <div className="space-y-2">
-            <button
-              onClick={() => {
-                setEmail('admin@aquaharvest.com');
-                setPassword('admin123');
-              }}
-              className="w-full text-left px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
-            >
-              Admin: admin@aquaharvest.com / admin123
-            </button>
-            <button
-              onClick={() => {
-                setEmail('user@example.com');
-                setPassword('user123');
-              }}
-              className="w-full text-left px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
-            >
-              User: user@example.com / user123
-            </button>
-            <button
-              onClick={() => {
-                setEmail('contractor@example.com');
-                setPassword('contractor123');
-              }}
-              className="w-full text-left px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
-            >
-              Contractor: contractor@example.com / contractor123
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

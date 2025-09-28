@@ -84,41 +84,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Always use mock authentication - no Supabase calls
-    let mockUser = null;
+    // Check stored users for authentication
+    const storedUsers = JSON.parse(localStorage.getItem('aquaharvest_all_users') || '[]');
+    const allUsers = [...mockUsers, ...storedUsers];
     
-    // Check for demo credentials
-    if (email === 'admin@aquaharvest.com' && password === 'admin123') {
-      mockUser = mockUsers.find(u => u.role === 'admin');
-    } else if (email === 'user@example.com' && password === 'user123') {
-      mockUser = mockUsers.find(u => u.role === 'user');
-    } else if (email === 'contractor@example.com' && password === 'contractor123') {
-      mockUser = mockUsers.find(u => u.role === 'contractor');
+    const foundUser = allUsers.find(u => u.email === email);
+    
+    if (!foundUser) {
+      return { error: { message: 'No account found with this email address.' } };
     }
     
-    if (mockUser) {
-      setUser(mockUser);
-      localStorage.setItem('aquaharvest_user', JSON.stringify(mockUser));
+    // For demo purposes, we'll use a simple password check
+    // In production, this would be properly hashed and verified
+    const storedPassword = localStorage.getItem(`password_${foundUser.id}`);
+    const isValidPassword = (
+      // Demo admin credentials (hidden from UI)
+      (email === 'admin@aquaharvest.com' && password === 'admin123') ||
+      // User-created accounts
+      (storedPassword && storedPassword === password)
+    );
+    
+    if (isValidPassword) {
+      setUser(foundUser);
+      localStorage.setItem('aquaharvest_user', JSON.stringify(foundUser));
       return { error: null };
     } else {
-      return { error: { message: 'Invalid email or password. Please use the demo credentials provided.' } };
+      return { error: { message: 'Invalid password. Please check your credentials and try again.' } };
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, phone?: string) => {
-    // Mock signup - no Supabase calls
+  const signUp = async (email: string, password: string, name: string, role: string = 'user') => {
+    // Check if user already exists
+    const storedUsers = JSON.parse(localStorage.getItem('aquaharvest_all_users') || '[]');
+    const allUsers = [...mockUsers, ...storedUsers];
+    
+    if (allUsers.find(u => u.email === email)) {
+      return { error: { message: 'An account with this email already exists.' } };
+    }
+    
     const newUser: User = {
       id: `user-${Date.now()}`,
       email,
       full_name: name,
-      role: 'user',
+      role: role as any,
       language_preference: 'english',
       created_at: new Date().toISOString()
     };
     
-    mockUsers.push(newUser);
-    setUser(newUser);
-    localStorage.setItem('aquaharvest_user', JSON.stringify(newUser));
+    // Store user and password
+    storedUsers.push(newUser);
+    localStorage.setItem('aquaharvest_all_users', JSON.stringify(storedUsers));
+    localStorage.setItem(`password_${newUser.id}`, password);
+    
     return { error: null };
   };
 
