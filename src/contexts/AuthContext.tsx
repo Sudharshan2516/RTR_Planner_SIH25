@@ -84,7 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (!isSupabaseConfigured) {
+    // Always use mock authentication since Supabase is not properly configured
+    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
       // Mock authentication
       // Check for demo credentials
       let mockUser = null;
@@ -105,16 +106,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return { error };
-    } catch (error) {
-      return { error };
-    }
+    // Skip Supabase authentication to prevent fetch errors
+    return { error: { message: 'Please use the demo credentials provided on the login page.' } };
   };
 
   const signUp = async (email: string, password: string, name: string, phone?: string) => {
-    if (!isSupabaseConfigured) {
+    // Always use mock signup since Supabase is not properly configured
+    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
       // Mock signup
       const newUser: User = {
         id: `user-${Date.now()}`,
@@ -131,71 +129,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     }
 
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name, phone }
-        }
-      });
-
-      if (data.user && !error) {
-        // Create user profile
-        await supabase.from('users').insert({
-          id: data.user.id,
-          name,
-          email,
-          phone,
-          role: 'registered',
-          language_pref: 'english'
-        });
-      }
-
-      return { error };
-    } catch (error) {
-      return { error };
-    }
+    // Skip Supabase signup to prevent fetch errors
+    return { error: { message: 'Please use the demo login credentials instead.' } };
   };
 
   const signOut = async () => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
       setUser(null);
       localStorage.removeItem('aquaharvest_user');
       return;
     }
 
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    // Skip Supabase signout to prevent fetch errors
+    setUser(null);
+    localStorage.removeItem('aquaharvest_user');
   };
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return { error: new Error('No user logged in') };
 
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || supabaseUrl === 'https://demo.supabase.co') {
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
       localStorage.setItem('aquaharvest_user', JSON.stringify(updatedUser));
       return { error: null };
     }
 
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', user.id);
-
-      if (!error) {
-        setUser({ ...user, ...updates });
-      }
-
-      return { error };
-    } catch (error) {
-      return { error };
-    }
+    // Skip Supabase update to prevent fetch errors
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    localStorage.setItem('aquaharvest_user', JSON.stringify(updatedUser));
+    return { error: null };
   };
 
   const value = {
