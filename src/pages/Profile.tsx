@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X, Award, Droplets, TrendingUp } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, CreditCard as Edit, Save, X, Award, Droplets, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';

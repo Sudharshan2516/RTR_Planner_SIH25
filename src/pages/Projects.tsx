@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Calendar, MapPin, Users, Square, Eye, Edit, Trash2, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Calendar, MapPin, Users, Square, Eye, CreditCard as Edit, Trash2, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';
