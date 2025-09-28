@@ -43,5 +43,9 @@ const Home: React.FC = () => {
             <div className="mb-8 flex justify-center space-x-4">
               <div></div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
