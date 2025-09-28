@@ -42,3 +42,4 @@ const Home: React.FC = () => {
             {/* Animated Water Droplets */}
             <div className="mb-8 flex justify-center space-x-4">
               <div></div>
+            </div>
