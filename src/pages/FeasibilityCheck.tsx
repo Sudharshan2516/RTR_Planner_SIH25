@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, MapPin, Home, Users, Square } from 'lucide-react';
+import { Calculator, MapPin, Home, Users, Square, Map, Layers, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import { calculateHarvestPrediction, getStructureRecommendation, calculateCostBenefit, FeasibilityInput } from '../utils/calculations';
+import { calculateHarvestPrediction, getStructureRecommendation, calculateCostBenefit, FeasibilityInput, getStructureDisplayName, getSuitabilityColor } from '../utils/calculations';
 import { asyncProcessor } from '../utils/asyncProcessor';
 import { supabase } from '../lib/supabase';
+import GISMap from '../components/GISMap';
 
 const FeasibilityCheck: React.FC = () => {
   const { user } = useAuth();
@@ -25,6 +26,10 @@ const FeasibilityCheck: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [projectName, setProjectName] = useState('');
+  const [showMap, setShowMap] = useState(false);
+  const [showRainfallLayer, setShowRainfallLayer] = useState(false);
+  const [showSoilLayer, setShowSoilLayer] = useState(false);
+  const [coordinates, setCoordinates] = useState({ lat: 17.3850, lng: 78.4867 });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -34,6 +39,36 @@ const FeasibilityCheck: React.FC = () => {
         ? parseFloat(value) || 0
         : value
     }));
+  };
+
+  const handleLocationSelect = (lat: number, lng: number, address: string) => {
+    setCoordinates({ lat, lng });
+    setFormData(prev => ({ ...prev, location: address }));
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCoordinates({ lat: latitude, lng: longitude });
+          setFormData(prev => ({ 
+            ...prev, 
+            location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` 
+          }));
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          if (user) {
+            addNotification({
+              title: 'Location Error',
+              message: 'Unable to get your current location. Please enter manually.',
+              type: 'warning'
+            });
+          }
+        }
+      );
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,20 +219,73 @@ const FeasibilityCheck: React.FC = () => {
         {/* Structure Recommendation */}
         <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
           <h3 className="text-xl font-semibold text-green-900 mb-4">🏗️ Recommended Structure</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-lg font-medium text-green-800">
+                {getStructureDisplayName(results.structure.structureType)}
+              </h4>
+              <span className={`text-sm font-semibold ${getSuitabilityColor(results.structure.suitabilityScore)}`}>
+                Suitability: {results.structure.suitabilityScore}%
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p><strong>Capacity:</strong> {results.structure.tankCapacity.toLocaleString()} liters</p>
+                <p><strong>Installation Time:</strong> {results.structure.installationTimeDays} days</p>
+                <p><strong>Efficiency:</strong> {Math.round(results.structure.efficiencyRating * 100)}%</p>
+                <p><strong>Maintenance:</strong> {results.structure.maintenanceFrequency}</p>
+              </div>
+              <div>
+                <p><strong>Dimensions:</strong></p>
+                <ul className="ml-4 text-sm">
+                  <li>Length: {results.structure.dimensions.length}m</li>
+                  <li>Width: {results.structure.dimensions.width}m</li>
+                  <li>Height: {results.structure.dimensions.height}m</li>
+                </ul>
+              </div>
+            </div>
+            
             <div>
-              <p><strong>Type:</strong> {results.structure.structureType.replace('_', ' ').toUpperCase()}</p>
-              <p><strong>Capacity:</strong> {results.structure.tankCapacity.toLocaleString()} liters</p>
-              <p><strong>Installation Time:</strong> {results.structure.installationTimeDays} days</p>
-              <p><strong>Efficiency:</strong> {Math.round(results.structure.efficiencyRating * 100)}%</p>
+              <p><strong>Materials Required:</strong></p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {results.structure.materials.map((material: string, index: number) => (
+                  <span key={index} className="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs">
+                    {material}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Environmental Impact */}
+        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-lg">
+          <h3 className="text-xl font-semibold text-emerald-900 mb-4">🌍 Environmental Impact</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-700">
+                  {Math.round(results.harvest.predictedHarvestLiters / 1000)}K L
+                </div>
+                <div className="text-sm text-emerald-600">Water Conserved</div>
+              </div>
             </div>
             <div>
-              <p><strong>Dimensions:</strong></p>
-              <ul className="ml-4 text-sm">
-                <li>Length: {results.structure.dimensions.length}m</li>
-                <li>Width: {results.structure.dimensions.width}m</li>
-                <li>Height: {results.structure.dimensions.height}m</li>
-              </ul>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-700">
+                  {results.cost.environmentalBenefit.split(' ')[0]}
+                </div>
+                <div className="text-sm text-emerald-600">kg CO₂ Saved</div>
+              </div>
+            </div>
+            <div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-700">
+                  {Math.round((results.harvest.predictedHarvestLiters / (formData.numDwellers * 150 * 365)) * 100)}%
+                </div>
+                <div className="text-sm text-emerald-600">Water Independence</div>
+              </div>
             </div>
           </div>
         </div>
@@ -309,6 +397,69 @@ const FeasibilityCheck: React.FC = () => {
           </p>
         </div>
 
+        {/* GIS Map Integration */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Map className="h-5 w-5 mr-2" />
+              Location & Environmental Data
+            </h2>
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowMap(!showMap)}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  showMap ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                <Eye className="h-4 w-4 inline mr-1" />
+                {showMap ? 'Hide Map' : 'Show Map'}
+              </button>
+              {showMap && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowRainfallLayer(!showRainfallLayer)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      showRainfallLayer ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    <Layers className="h-4 w-4 inline mr-1" />
+                    Rainfall
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowSoilLayer(!showSoilLayer)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      showSoilLayer ? 'bg-brown-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    <Layers className="h-4 w-4 inline mr-1" />
+                    Soil
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {showMap && (
+            <div className="mb-4">
+              <GISMap
+                latitude={coordinates.lat}
+                longitude={coordinates.lng}
+                location={formData.location}
+                roofArea={formData.roofArea}
+                onLocationSelect={handleLocationSelect}
+                showRainfallData={showRainfallLayer}
+                showSoilData={showSoilLayer}
+              />
+              <p className="text-sm text-gray-600 mt-2">
+                Click on the map to select a different location, or use the button below to get your current location.
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="bg-white rounded-lg shadow-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {user && (
@@ -352,16 +503,26 @@ const FeasibilityCheck: React.FC = () => {
                   <MapPin className="inline h-4 w-4 mr-1" />
                   Location/City *
                 </label>
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  required
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Mumbai, Delhi, Bangalore"
-                />
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    required
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Mumbai, Delhi, Bangalore"
+                  />
+                  <button
+                    type="button"
+                    onClick={getCurrentLocation}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    title="Get current location"
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               <div>
