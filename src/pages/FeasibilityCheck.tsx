@@ -6,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { aiRecommendationEngine, AIInput } from '../services/aiRecommendationEngine';
 import { rainfallApiService } from '../services/rainfallApi';
+import { locationService, LocationResult } from '../services/locationService';
 import { generatePDFReport, ReportData } from '../utils/pdfGenerator';
 import GISMap from '../components/GISMap';
 import HydrogeologyInfo from '../components/HydrogeologyInfo';
@@ -40,19 +41,73 @@ const FeasibilityCheck: React.FC = () => {
   const [showSoilLayer, setShowSoilLayer] = useState(false);
   const [rainfallData, setRainfallData] = useState<any>(null);
   const [groundwaterData, setGroundwaterData] = useState<any>(null);
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationResult[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [roofAreaUnit, setRoofAreaUnit] = useState<'sqm' | 'sqft'>('sqm');
+  const [spaceUnit, setSpaceUnit] = useState<'sqm' | 'sqft'>('sqm');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Convert area values based on selected units
+    let processedValue = value;
+    if (name === 'roofArea' && roofAreaUnit === 'sqft') {
+      processedValue = (parseFloat(value) * 0.092903).toString(); // Convert sq ft to sq m
+    } else if (name === 'availableSpace' && spaceUnit === 'sqft') {
+      processedValue = (parseFloat(value) * 0.092903).toString(); // Convert sq ft to sq m
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'roofArea' || name === 'numDwellers' || name === 'availableSpace' || name === 'groundwaterDepth'
-        ? parseFloat(value) || 0
+      [name]: name === 'roofArea' || name === 'numDwellers' || name === 'availableSpace' || name === 'groundwaterDepth' || name === 'latitude' || name === 'longitude'
+        ? parseFloat(processedValue) || 0
         : value,
       waterDemand: name === 'numDwellers' ? (parseFloat(value) || 0) * 150 * 365 : prev.waterDemand
     }));
+    
+    // Auto-fill groundwater when coordinates change
+    if (name === 'latitude' || name === 'longitude') {
+      const lat = name === 'latitude' ? parseFloat(value) : formData.coordinates.lat;
+      const lng = name === 'longitude' ? parseFloat(value) : formData.coordinates.lng;
+      
+      if (lat && lng && lat !== 0 && lng !== 0) {
+        setFormData(prev => ({
+          ...prev,
+          coordinates: { lat, lng }
+        }));
+        fetchLocationData(lat, lng, formData.location || `${lat}, ${lng}`);
+      }
+    }
   };
 
-  const handleLocationSelect = (lat: number, lng: number, address: string) => {
+  const handleLocationSearch = async (searchTerm: string) => {
+    if (searchTerm.length < 3) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      return;
+    }
+    
+    try {
+      const suggestions = await locationService.geocodeAddress(searchTerm);
+      setLocationSuggestions(suggestions);
+      setShowLocationSuggestions(suggestions.length > 0);
+    } catch (error) {
+      console.error('Location search error:', error);
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+    }
+  };
+
+  const handleLocationSelect = (suggestion: LocationResult) => {
+    setFormData(prev => ({
+      ...prev,
+      location: suggestion.address,
+      coordinates: suggestion.coordinates
+    }));
+    setShowLocationSuggestions(false);
+    fetchLocationData(suggestion.coordinates.lat, suggestion.coordinates.lng, suggestion.address);
+  };
+  const handleMapLocationSelect = (lat: number, lng: number, address: string) => {
     setFormData(prev => ({ 
       ...prev, 
       location: address,
@@ -93,21 +148,18 @@ const FeasibilityCheck: React.FC = () => {
   };
 
   const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const newLocation = `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-          
+    setLoading(true);
+    
+    locationService.getCurrentLocation()
+      .then((result) => {
+        if (result) {
           setFormData(prev => ({
-            ...prev, 
-            location: newLocation,
-            coordinates: { lat: latitude, lng: longitude }
+            ...prev,
+            location: result.address,
+            coordinates: result.coordinates
           }));
           
-          fetchLocationData(latitude, longitude, newLocation);
-          setLoading(false);
+          fetchLocationData(result.coordinates.lat, result.coordinates.lng, result.address);
           
           if (user) {
             addNotification({
@@ -116,43 +168,30 @@ const FeasibilityCheck: React.FC = () => {
               type: 'success'
             });
           }
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setLoading(false);
-          
-          let errorMessage = 'Unable to get your current location. Please enter manually.';
-          if (error.code === error.PERMISSION_DENIED) {
-            errorMessage = 'Location access denied. Please allow location access and try again.';
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            errorMessage = 'Location information unavailable. Please enter manually.';
-          } else if (error.code === error.TIMEOUT) {
-            errorMessage = 'Location request timed out. Please try again.';
-          }
-          
-          if (user) {
-            addNotification({
-              title: 'Location Error',
-              message: errorMessage,
-              type: 'warning'
-            });
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
         }
-      );
-    } else {
-      if (user) {
-        addNotification({
-          title: 'Geolocation Not Supported',
-          message: 'Your browser does not support geolocation. Please enter location manually.',
-          type: 'warning'
-        });
-      }
-    }
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error getting location:', error);
+        setLoading(false);
+        
+        let errorMessage = 'Unable to get your current location. Please enter manually.';
+        if (error.code === 1) {
+          errorMessage = 'Location access denied. Please allow location access and try again.';
+        } else if (error.code === 2) {
+          errorMessage = 'Location information unavailable. Please enter manually.';
+        } else if (error.code === 3) {
+          errorMessage = 'Location request timed out. Please try again.';
+        }
+        
+        if (user) {
+          addNotification({
+            title: 'Location Error',
+            message: errorMessage,
+            type: 'warning'
+          });
+        }
+      });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -311,24 +350,81 @@ const FeasibilityCheck: React.FC = () => {
                   <MapPin className="inline h-4 w-4 mr-1" />
                   {t('quick.address')}
                 </label>
-                <div className="flex space-x-2">
+                <div className="relative">
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        handleLocationSearch(e.target.value);
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Enter address or PIN code"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={getCurrentLocation}
+                      disabled={loading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      <MapPin className="h-4 w-4" />
+                    </button>
+                  </div>
+                  
+                  {/* Location Suggestions */}
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {locationSuggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleLocationSelect(suggestion)}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                        >
+                          <div className="font-medium text-gray-900">{suggestion.components.city || 'Unknown City'}</div>
+                          <div className="text-sm text-gray-600 truncate">{suggestion.address}</div>
+                          <div className="text-xs text-gray-500">
+                            Accuracy: {suggestion.accuracy} | {suggestion.coordinates.lat.toFixed(4)}, {suggestion.coordinates.lng.toFixed(4)}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Manual Coordinates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Latitude
+                  </label>
                   <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
+                    type="number"
+                    name="latitude"
+                    value={formData.coordinates.lat || ''}
                     onChange={handleInputChange}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="Enter address or PIN code"
-                    required
+                    step="0.000001"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="17.3850"
                   />
-                  <button
-                    type="button"
-                    onClick={getCurrentLocation}
-                    disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-                  >
-                    <MapPin className="h-4 w-4" />
-                  </button>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Longitude
+                  </label>
+                  <input
+                    type="number"
+                    name="longitude"
+                    value={formData.coordinates.lng || ''}
+                    onChange={handleInputChange}
+                    step="0.000001"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="78.4867"
+                  />
                 </div>
               </div>
 
@@ -338,16 +434,26 @@ const FeasibilityCheck: React.FC = () => {
                   <Home className="inline h-4 w-4 mr-1" />
                   {t('quick.roof_area')}
                 </label>
-                <input
-                  type="number"
-                  name="roofArea"
-                  value={formData.roofArea || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Enter roof area in square meters"
-                  required
-                  min="1"
-                />
+                <div className="flex space-x-2">
+                  <input
+                    type="number"
+                    name="roofArea"
+                    value={roofAreaUnit === 'sqm' ? formData.roofArea || '' : Math.round((formData.roofArea || 0) / 0.092903) || ''}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder={`Enter roof area in ${roofAreaUnit === 'sqm' ? 'square meters' : 'square feet'}`}
+                    required
+                    min="1"
+                  />
+                  <select
+                    value={roofAreaUnit}
+                    onChange={(e) => setRoofAreaUnit(e.target.value as 'sqm' | 'sqft')}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="sqm">m²</option>
+                    <option value="sqft">ft²</option>
+                  </select>
+                </div>
               </div>
 
               {/* Number of Dwellers */}
@@ -374,16 +480,26 @@ const FeasibilityCheck: React.FC = () => {
                   <Square className="inline h-4 w-4 mr-1" />
                   {t('quick.open_space')}
                 </label>
-                <input
-                  type="number"
-                  name="availableSpace"
-                  value={formData.availableSpace || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Available space in square meters"
-                  required
-                  min="1"
-                />
+                <div className="flex space-x-2">
+                  <input
+                    type="number"
+                    name="availableSpace"
+                    value={spaceUnit === 'sqm' ? formData.availableSpace || '' : Math.round((formData.availableSpace || 0) / 0.092903) || ''}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder={`Available space in ${spaceUnit === 'sqm' ? 'square meters' : 'square feet'}`}
+                    required
+                    min="1"
+                  />
+                  <select
+                    value={spaceUnit}
+                    onChange={(e) => setSpaceUnit(e.target.value as 'sqm' | 'sqft')}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="sqm">m²</option>
+                    <option value="sqft">ft²</option>
+                  </select>
+                </div>
               </div>
 
               {/* Roof Type */}
@@ -419,7 +535,14 @@ const FeasibilityCheck: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Groundwater depth in meters"
                   min="1"
+                  readOnly={groundwaterData ? true : false}
+                  title={groundwaterData ? "Auto-filled based on location" : "Enter manually or select location for auto-fill"}
                 />
+                {groundwaterData && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    Auto-filled based on location data
+                  </p>
+                )}
               </div>
             </div>
 
@@ -443,7 +566,7 @@ const FeasibilityCheck: React.FC = () => {
                   longitude={formData.coordinates.lng}
                   location={formData.location}
                   roofArea={formData.roofArea}
-                  onLocationSelect={handleLocationSelect}
+                  onLocationSelect={handleMapLocationSelect}
                   showRainfallData={showRainfallLayer}
                   showSoilData={showSoilLayer}
                 />

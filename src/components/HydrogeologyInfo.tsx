@@ -261,7 +261,7 @@ const HydrogeologyInfo: React.FC<HydrogeologyInfoProps> = ({
     const currentYear = new Date().getFullYear();
     return Array.from({ length: 10 }, (_, i) => ({
       year: currentYear - 9 + i,
-      rainfall: Math.round(annual + (Math.random() - 0.5) * 400)
+      rainfall: Math.max(0, Math.round(annual + (Math.random() - 0.5) * 400))
     }));
   };
 
@@ -272,6 +272,10 @@ const HydrogeologyInfo: React.FC<HydrogeologyInfoProps> = ({
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <Droplets className="h-6 w-6 text-blue-600" />
+          <h3 className="text-xl font-semibold">Loading Environmental Data...</h3>
+        </div>
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="space-y-3">
@@ -280,6 +284,18 @@ const HydrogeologyInfo: React.FC<HydrogeologyInfoProps> = ({
             <div className="h-3 bg-gray-200 rounded w-4/6"></div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!hydroData || !rainfallData) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <Droplets className="h-6 w-6 text-red-600" />
+          <h3 className="text-xl font-semibold">Data Unavailable</h3>
+        </div>
+        <p className="text-gray-600">Unable to load environmental data for this location. Please try again.</p>
       </div>
     );
   }

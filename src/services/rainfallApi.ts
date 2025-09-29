@@ -147,9 +147,28 @@ class RainfallApiService {
   }
 
   async getGroundwaterData(location: string, coordinates: { lat: number; lng: number }): Promise<GroundwaterData> {
-    // For now, return simulated groundwater data
-    // In production, this would integrate with CGWB or state groundwater APIs
-    return this.generateGroundwaterData(location, coordinates);
+    try {
+      // For now, return simulated groundwater data
+      // In production, this would integrate with CGWB or state groundwater APIs
+      return this.generateGroundwaterData(location, coordinates);
+    } catch (error) {
+      console.error('Error fetching groundwater data:', error);
+      // Return default groundwater data
+      return {
+        location,
+        coordinates,
+        depth: 15,
+        quality: 'Good (TDS 300-600 mg/L)',
+        aquiferType: 'Unconfined Aquifer',
+        seasonalVariation: {
+          preMonsoon: 17,
+          monsoon: 13,
+          postMonsoon: 15
+        },
+        rechargeRate: 12,
+        lastUpdated: new Date().toISOString()
+      };
+    }
   }
 
   private async fetchFromOpenWeather(coordinates: { lat: number; lng: number }): Promise<RainfallData | null> {
