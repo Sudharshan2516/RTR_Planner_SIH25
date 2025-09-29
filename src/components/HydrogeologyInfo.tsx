@@ -288,7 +288,247 @@ const HydrogeologyInfo: React.FC<HydrogeologyInfoProps> = ({
     );
   }
 
-  if (!hydroData || !rainfallData) {
+  if (!hydroData && !rainfallData) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <Droplets className="h-6 w-6 text-red-600" />
+          <h3 className="text-xl font-semibold">Data Unavailable</h3>
+        </div>
+        <p className="text-gray-600">Unable to load environmental data for this location. Please try again.</p>
+      </div>
+    );
+  }
+
+  // Initialize default data if not provided
+  const defaultHydroData = hydroData || {
+    location,
+    coordinates: { lat: latitude, lng: longitude },
+    soilType: getSoilType(latitude, longitude),
+    permeability: getPermeability(latitude, longitude),
+    groundwaterDepth: getGroundwaterDepth(latitude, longitude),
+    aquiferType: getAquiferType(latitude, longitude),
+    rechargeRate: getRechargeRate(latitude, longitude),
+    waterQuality: getWaterQuality(latitude, longitude),
+    seasonalVariation: {
+      preMonsoon: getGroundwaterDepth(latitude, longitude) + 1,
+      monsoon: getGroundwaterDepth(latitude, longitude) - 2,
+      postMonsoon: getGroundwaterDepth(latitude, longitude) - 1
+    },
+    recommendations: getRecommendations(latitude, longitude)
+  };
+
+  const defaultRainfallData = rainfallData || {
+    location,
+    annualRainfall: getAnnualRainfall(location),
+    monthlyData: generateMonthlyRainfall(getAnnualRainfall(location)),
+    rainfallPattern: getRainfallPattern(getAnnualRainfall(location)),
+    intensity: getRainfallIntensity(getAnnualRainfall(location)),
+    reliability: getRainfallReliability(location),
+    historicalTrends: generateHistoricalTrends(getAnnualRainfall(location))
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Hydrogeology Information */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div 
+          className="p-6 bg-gradient-to-r from-blue-500 to-green-500 text-white cursor-pointer"
+          onClick={() => toggleSection('hydro')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Layers className="h-6 w-6" />
+              <h3 className="text-xl font-semibold">Local Hydrogeology</h3>
+            </div>
+            {expandedSection === 'hydro' ? <ChevronUp /> : <ChevronDown />}
+          </div>
+          <p className="text-blue-100 mt-2">Subsurface water conditions and soil characteristics</p>
+        </div>
+        
+        {expandedSection === 'hydro' && (
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Soil & Geology</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Soil Type:</span>
+                      <span className="font-medium">{defaultHydroData.soilType}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Permeability:</span>
+                      <span className="font-medium">{defaultHydroData.permeability}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Aquifer Type:</span>
+                      <span className="font-medium">{defaultHydroData.aquiferType}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Groundwater</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Depth to Water:</span>
+                      <span className="font-medium">{defaultHydroData.groundwaterDepth}m</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Recharge Rate:</span>
+                      <span className="font-medium">{defaultHydroData.rechargeRate}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Water Quality:</span>
+                      <span className="font-medium">{defaultHydroData.waterQuality}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Seasonal Variation</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Pre-Monsoon:</span>
+                      <span className="font-medium">{defaultHydroData.seasonalVariation.preMonsoon}m</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Monsoon:</span>
+                      <span className="font-medium text-green-600">{defaultHydroData.seasonalVariation.monsoon}m</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Post-Monsoon:</span>
+                      <span className="font-medium">{defaultHydroData.seasonalVariation.postMonsoon}m</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Recommendations</h4>
+                  <ul className="space-y-1">
+                    {defaultHydroData.recommendations.map((rec, index) => (
+                      <li key={index} className="text-sm text-gray-600 flex items-start">
+                        <span className="text-green-500 mr-2">•</span>
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Rainfall Data */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div 
+          className="p-6 bg-gradient-to-r from-blue-600 to-blue-400 text-white cursor-pointer"
+          onClick={() => toggleSection('rainfall')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Droplets className="h-6 w-6" />
+              <h3 className="text-xl font-semibold">Local Rainfall Data</h3>
+            </div>
+            {expandedSection === 'rainfall' ? <ChevronUp /> : <ChevronDown />}
+          </div>
+          <p className="text-blue-100 mt-2">Historical precipitation patterns and trends</p>
+        </div>
+        
+        {expandedSection === 'rainfall' && (
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Annual Overview</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Annual Rainfall:</span>
+                      <span className="font-medium text-blue-600">{defaultRainfallData.annualRainfall}mm</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Pattern:</span>
+                      <span className="font-medium">{defaultRainfallData.rainfallPattern}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Intensity:</span>
+                      <span className="font-medium">{defaultRainfallData.intensity}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Reliability:</span>
+                      <span className="font-medium">{Math.round(defaultRainfallData.reliability * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Monthly Distribution</h4>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    {defaultRainfallData.monthlyData.map((month) => (
+                      <div key={month.month} className="text-center p-2 bg-gray-50 rounded">
+                        <div className="font-medium text-gray-900">{month.month}</div>
+                        <div className="text-blue-600">{month.rainfall}mm</div>
+                        <div className="text-gray-500 text-xs">{month.rainyDays} days</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Historical Trends (Last 10 Years)</h4>
+                  <div className="space-y-1">
+                    {defaultRainfallData.historicalTrends.map((trend) => (
+                      <div key={trend.year} className="flex justify-between items-center py-1">
+                        <span className="text-gray-600">{trend.year}:</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">{trend.rainfall}mm</span>
+                          <div 
+                            className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden"
+                          >
+                            <div 
+                              className="h-full bg-blue-500 rounded-full"
+                              style={{ 
+                                width: `${Math.min(100, (trend.rainfall / defaultRainfallData.annualRainfall) * 100)}%` 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h5 className="font-medium text-blue-900">Recharge Potential</h5>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Based on local conditions, approximately{' '}
+                        <strong>{Math.round(defaultRainfallData.annualRainfall * 0.15)}mm</strong> of annual 
+                        rainfall can be effectively recharged to groundwater through proper 
+                        rainwater harvesting systems.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default HydrogeologyInfo;
+
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center space-x-3 mb-4">
