@@ -491,7 +491,6 @@ const FeasibilityCheck: React.FC = () => {
              style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '2s'}}>
         </div>
       </div>
-    </div>
   );
 };
 
