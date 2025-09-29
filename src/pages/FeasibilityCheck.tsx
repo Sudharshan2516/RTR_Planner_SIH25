@@ -478,7 +478,6 @@ const FeasibilityCheck: React.FC = () => {
           </div>
         </div>
       </div>
-
       {/* Background water droplets */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 w-8 h-12 bg-blue-200 opacity-20 animate-float" 
