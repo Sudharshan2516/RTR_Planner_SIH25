@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, MapPin, Home, Users, Square, Map, Layers, Eye, Download, Sliders } from 'lucide-react';
+import { Calculator, MapPin, Home, Users, Square, Map, Layers, Eye, Download, Sliders, Droplets, DollarSign, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -167,7 +167,7 @@ const FeasibilityCheck: React.FC = () => {
       // Calculate additional metrics
       const harvestPotential = formData.roofArea * formData.annualRainfall * 0.8 * 0.001 * 1000; // liters
       const annualSavings = Math.min(harvestPotential, formData.waterDemand) * 0.02; // ₹0.02 per liter
-      const paybackPeriod = structureSpecs.estimatedCost / annualSavings;
+      const paybackPeriod = structureSpecs.estimatedCost / (annualSavings || 1); // avoid divide by zero
       
       const calculationResults = {
         input: formData,
@@ -257,7 +257,7 @@ const FeasibilityCheck: React.FC = () => {
         totalCost: results.structureSpecs.estimatedCost,
         annualSavings: results.annualSavings,
         paybackPeriod: results.paybackPeriod,
-        roi: (results.annualSavings / results.structureSpecs.estimatedCost) * 100
+        roi: (results.annualSavings / (results.structureSpecs.estimatedCost || 1)) * 100
       },
       generatedAt: new Date().toLocaleDateString(),
       userName: user?.full_name || 'User'
@@ -412,7 +412,7 @@ const FeasibilityCheck: React.FC = () => {
             <div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-700">
-                  {Math.round((results.harvestPotential / formData.waterDemand) * 100)}%
+                  {Math.round((results.harvestPotential / (formData.waterDemand || 1)) * 100)}%
                 </div>
                 <div className="text-sm text-emerald-600">Water Independence</div>
               </div>
@@ -478,270 +478,6 @@ const FeasibilityCheck: React.FC = () => {
           </div>
         </div>
       </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 relative overflow-hidden">
-      {/* Background water droplets */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-8 h-12 bg-blue-200 opacity-20 animate-float" 
-             style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'}}>
-        </div>
-        <div className="absolute top-40 right-20 w-6 h-10 bg-green-200 opacity-15 animate-float" 
-             style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '1s'}}>
-        </div>
-        <div className="absolute bottom-32 left-1/4 w-10 h-14 bg-blue-100 opacity-25 animate-float" 
-             style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '2s'}}>
-        </div>
-      </div>
-      
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          {/* Water droplet with calculator icon */}
-          <div className="relative mx-auto mb-4 w-16 h-20 bg-gradient-to-b from-blue-500 to-blue-600 flex items-center justify-center" 
-               style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'}}>
-            <Calculator className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Rainwater Harvesting Feasibility Check
-          </h1>
-          <p className="text-gray-600">
-            Get instant analysis of your rooftop's rainwater harvesting potential
-          </p>
-        </div>
-
-        {/* GIS Map Integration */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Map className="h-5 w-5 mr-2" />
-              Location & Environmental Data
-            </h2>
-            <div className="flex space-x-2">
-              <button
-                type="button"
-                onClick={() => setShowMap(!showMap)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  showMap ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                <Eye className="h-4 w-4 inline mr-1" />
-                {showMap ? 'Hide Map' : 'Show Map'}
-              </button>
-              {showMap && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setShowRainfallLayer(!showRainfallLayer)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      showRainfallLayer ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    <Layers className="h-4 w-4 inline mr-1" />
-                    Rainfall
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowSoilLayer(!showSoilLayer)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      showSoilLayer ? 'bg-brown-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    <Layers className="h-4 w-4 inline mr-1" />
-                    Soil
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-          
-          {showMap && (
-            <div className="mb-4">
-              <GISMap
-                latitude={coordinates.lat}
-                longitude={coordinates.lng}
-                location={formData.location}
-                roofArea={formData.roofArea}
-                onLocationSelect={handleLocationSelect}
-                showRainfallData={showRainfallLayer}
-                showSoilData={showSoilLayer}
-              />
-              <p className="text-sm text-gray-600 mt-2">
-                Click on the map to select a different location, or use the button below to get your current location.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {user && (
-              <div>
-                <label htmlFor="projectName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="projectName"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Give your project a name"
-                />
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="roofArea" className="block text-sm font-medium text-gray-700 mb-2">
-                  <Square className="inline h-4 w-4 mr-1" />
-                  Roof Area (sq. meters) *
-                </label>
-                <input
-                  type="number"
-                  id="roofArea"
-                  name="roofArea"
-                  required
-                  min="1"
-                  step="0.1"
-                  value={formData.roofArea || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 100"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                  <MapPin className="inline h-4 w-4 mr-1" />
-                  Location/City *
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    required
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Mumbai, Delhi, Bangalore"
-                  />
-                  <button
-                    type="button"
-                    onClick={getCurrentLocation}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    title="Get current location"
-                  >
-                    <MapPin className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="numDwellers" className="block text-sm font-medium text-gray-700 mb-2">
-                  <Users className="inline h-4 w-4 mr-1" />
-                  Number of People *
-                </label>
-                <input
-                  type="number"
-                  id="numDwellers"
-                  name="numDwellers"
-                  required
-                  min="1"
-                  value={formData.numDwellers || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 4"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="availableSpace" className="block text-sm font-medium text-gray-700 mb-2">
-                  <Home className="inline h-4 w-4 mr-1" />
-                  Available Space (sq. meters) *
-                </label>
-                <input
-                  type="number"
-                  id="availableSpace"
-                  name="availableSpace"
-                  required
-                  min="1"
-                  step="0.1"
-                  value={formData.availableSpace || ''}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 20"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="roofType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Roof Type
-                </label>
-                <select
-                  id="roofType"
-                  name="roofType"
-                  value={formData.roofType}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="concrete">Concrete</option>
-                  <option value="tiles">Tiles</option>
-                  <option value="metal">Metal Sheets</option>
-                  <option value="asbestos">Asbestos</option>
-                  <option value="green">Green Roof</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="groundwaterDepth" className="block text-sm font-medium text-gray-700 mb-2">
-                Groundwater Depth (meters) *
-              </label>
-              <input
-                type="number"
-                id="groundwaterDepth"
-                name="groundwaterDepth"
-                required
-                min="1"
-                step="0.5"
-                value={formData.groundwaterDepth || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 15"
-              />
-            </div>
-
-            <div className="text-center">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Calculating...' : 'Calculate Feasibility'}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {renderResults()}
-        
-        {/* Hydrogeology and Rainfall Information */}
-        {formData.location && (
-          <div className="mt-12">
-            <HydrogeologyInfo
-              latitude={formData.coordinates.lat}
-              longitude={formData.coordinates.lng}
-              location={formData.location}
-              rainfallData={rainfallData}
-              groundwaterData={groundwaterData}
-            />
-          </div>
-        )}
-      </div>
-    </div>
   );
 };
 
