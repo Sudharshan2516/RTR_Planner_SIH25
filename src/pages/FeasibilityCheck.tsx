@@ -478,7 +478,7 @@ const FeasibilityCheck: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Background water droplets */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 w-8 h-12 bg-blue-200 opacity-20 animate-float" 
@@ -491,7 +491,7 @@ const FeasibilityCheck: React.FC = () => {
              style={{borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', animationDelay: '2s'}}>
         </div>
       </div>
-    
+    </div>
   );
 };
 
