@@ -22,7 +22,7 @@ const Navbar: React.FC = () => {
   const getNavLinks = () => {
     const baseLinks = [
       { to: '/', label: t('nav.home') },
-      { to: '/feasibility', label: t('nav.quick_check') }
+      { to: '/feasibility', label: t('nav.feasibility') }
     ];
 
     if (!user) {

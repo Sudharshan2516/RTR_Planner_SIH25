@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, MapPin, Home, Users, Square, Map, Layers, Eye } from 'lucide-react';
+import { Calculator, MapPin, Home, Users, Square, Map, Layers, Eye, Download, Sliders } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import { calculateHarvestPrediction, getStructureRecommendation, calculateCostBenefit, FeasibilityInput, getStructureDisplayName, getSuitabilityColor } from '../utils/calculations';
-import { asyncProcessor } from '../utils/asyncProcessor';
-import { supabase } from '../lib/supabase';
+import { aiRecommendationEngine, AIInput } from '../services/aiRecommendationEngine';
+import { rainfallApiService } from '../services/rainfallApi';
+import { generatePDFReport, ReportData } from '../utils/pdfGenerator';
 import GISMap from '../components/GISMap';
 import HydrogeologyInfo from '../components/HydrogeologyInfo';
+import FeasibilityScoreCard from '../components/FeasibilityScoreCard';
+import WhatIfSimulator from '../components/WhatIfSimulator';
 
 const FeasibilityCheck: React.FC = () => {
   const { user } = useAuth();
@@ -16,35 +18,49 @@ const FeasibilityCheck: React.FC = () => {
   const { addNotification } = useNotifications();
   const navigate = useNavigate();
   
-  const [formData, setFormData] = useState<FeasibilityInput>({
+  const [formData, setFormData] = useState<AIInput>({
     roofArea: 0,
     location: '',
+    coordinates: { lat: 17.3850, lng: 78.4867 },
+    annualRainfall: 800,
+    groundwaterDepth: 15,
+    soilType: 'loam',
     numDwellers: 0,
     availableSpace: 0,
     roofType: 'concrete',
+    waterDemand: 0
   });
   
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [projectName, setProjectName] = useState('');
   const [showMap, setShowMap] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
   const [showRainfallLayer, setShowRainfallLayer] = useState(false);
   const [showSoilLayer, setShowSoilLayer] = useState(false);
-  const [coordinates, setCoordinates] = useState({ lat: 17.3850, lng: 78.4867 });
+  const [rainfallData, setRainfallData] = useState<any>(null);
+  const [groundwaterData, setGroundwaterData] = useState<any>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'roofArea' || name === 'numDwellers' || name === 'availableSpace'
+      [name]: name === 'roofArea' || name === 'numDwellers' || name === 'availableSpace' || name === 'groundwaterDepth'
         ? parseFloat(value) || 0
-        : value
+        : value,
+      waterDemand: name === 'numDwellers' ? (parseFloat(value) || 0) * 150 * 365 : prev.waterDemand
     }));
   };
 
   const handleLocationSelect = (lat: number, lng: number, address: string) => {
-    setCoordinates({ lat, lng });
-    setFormData(prev => ({ ...prev, location: address }));
+    setFormData(prev => ({ 
+      ...prev, 
+      location: address,
+      coordinates: { lat, lng }
+    }));
+    
+    // Fetch rainfall and groundwater data for new location
+    fetchLocationData(lat, lng, address);
     
     if (user) {
       addNotification({
@@ -55,17 +71,42 @@ const FeasibilityCheck: React.FC = () => {
     }
   };
 
+  const fetchLocationData = async (lat: number, lng: number, location: string) => {
+    try {
+      const [rainfall, groundwater] = await Promise.all([
+        rainfallApiService.getRainfallData(location, { lat, lng }),
+        rainfallApiService.getGroundwaterData(location, { lat, lng })
+      ]);
+      
+      setRainfallData(rainfall);
+      setGroundwaterData(groundwater);
+      
+      setFormData(prev => ({
+        ...prev,
+        annualRainfall: rainfall.annualRainfall,
+        groundwaterDepth: groundwater.depth,
+        soilType: groundwater.aquiferType.toLowerCase().includes('alluvial') ? 'sandy' : 'loam'
+      }));
+    } catch (error) {
+      console.error('Error fetching location data:', error);
+    }
+  };
+
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       setLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setCoordinates({ lat: latitude, lng: longitude });
-          setFormData(prev => ({ 
+          const newLocation = `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+          
+          setFormData(prev => ({
             ...prev, 
-            location: `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})` 
+            location: newLocation,
+            coordinates: { lat: latitude, lng: longitude }
           }));
+          
+          fetchLocationData(latitude, longitude, newLocation);
           setLoading(false);
           
           if (user) {
@@ -119,89 +160,62 @@ const FeasibilityCheck: React.FC = () => {
     setLoading(true);
     
     try {
-      // Submit ML prediction job for async processing
-      const jobId = await asyncProcessor.submitJob('ml_prediction', formData);
+      // Get AI recommendation
+      const recommendation = aiRecommendationEngine.analyzeAndRecommend(formData);
+      const structureSpecs = aiRecommendationEngine.generateStructureSpecs(formData, recommendation.systemType);
       
-      // Poll for results
-      const pollResults = setInterval(async () => {
-        const job = await asyncProcessor.getJobStatus(jobId);
-        
-        if (job?.status === 'completed') {
-          clearInterval(pollResults);
-          
-          // Use the ML results to calculate other recommendations
-          const harvestPrediction = job.result;
-          const structureRecommendation = getStructureRecommendation(formData, harvestPrediction);
-          const costAnalysis = calculateCostBenefit(formData, structureRecommendation, harvestPrediction);
-          
-          const calculationResults = {
-            input: formData,
-            harvest: harvestPrediction,
-            structure: structureRecommendation,
-            cost: costAnalysis
-          };
-          
-          setResults(calculationResults);
-          setLoading(false);
-          
-          // Add success notification
-          if (user) {
-            addNotification({
-              title: 'Assessment Complete',
-              message: `Feasibility analysis for ${projectName || 'your project'} is ready!`,
-              type: 'success',
-              actionUrl: '/feasibility',
-              actionText: 'View Results'
-            });
-          }
-          
-        } else if (job?.status === 'failed') {
-          clearInterval(pollResults);
-          setLoading(false);
-          console.error('ML prediction failed:', job.error);
-          
-          // Fallback to synchronous calculation
-          const harvestPrediction = calculateHarvestPrediction(formData);
-          const structureRecommendation = getStructureRecommendation(formData, harvestPrediction);
-          const costAnalysis = calculateCostBenefit(formData, structureRecommendation, harvestPrediction);
-          
-          const calculationResults = {
-            input: formData,
-            harvest: harvestPrediction,
-            structure: structureRecommendation,
-            cost: costAnalysis
-          };
-          
-          setResults(calculationResults);
-        }
-      }, 1000);
+      // Calculate additional metrics
+      const harvestPotential = formData.roofArea * formData.annualRainfall * 0.8 * 0.001 * 1000; // liters
+      const annualSavings = Math.min(harvestPotential, formData.waterDemand) * 0.02; // ₹0.02 per liter
+      const paybackPeriod = structureSpecs.estimatedCost / annualSavings;
+      
+      const calculationResults = {
+        input: formData,
+        recommendation,
+        structureSpecs,
+        harvestPotential,
+        annualSavings,
+        paybackPeriod,
+        rainfallData,
+        groundwaterData
+      };
+      
+      setResults(calculationResults);
+      setLoading(false);
       
       // If user is logged in, save the project
       if (user) {
-        const { error } = await supabase
-          .from('projects')
-          .insert({
-            user_id: user.id,
-            project_name: projectName || `Project ${new Date().toLocaleDateString()}`,
-            roof_area: formData.roofArea,
-            location: formData.location,
-            number_of_dwellers: formData.numDwellers,
-            available_space: formData.availableSpace,
-            roof_type: formData.roofType,
-            status: 'draft'
-          });
+        // Save to localStorage for demo
+        const projects = JSON.parse(localStorage.getItem(`projects_${user.id}`) || '[]');
+        const newProject = {
+          id: `proj-${Date.now()}`,
+          user_id: user.id,
+          project_name: projectName || `Project ${new Date().toLocaleDateString()}`,
+          roof_area: formData.roofArea,
+          location: formData.location,
+          latitude: formData.coordinates.lat,
+          longitude: formData.coordinates.lng,
+          number_of_dwellers: formData.numDwellers,
+          available_space: formData.availableSpace,
+          roof_type: formData.roofType,
+          status: 'draft',
+          verification_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          estimated_harvest: harvestPotential,
+          estimated_cost: structureSpecs.estimatedCost
+        };
         
-        if (error) {
-          console.error('Error saving project:', error);
-        } else {
-          addNotification({
-            title: 'Project Saved',
-            message: `Project "${projectName || 'Untitled'}" has been saved to your dashboard.`,
-            type: 'success',
-            actionUrl: '/dashboard',
-            actionText: 'View Dashboard'
-          });
-        }
+        projects.push(newProject);
+        localStorage.setItem(`projects_${user.id}`, JSON.stringify(projects));
+        
+        addNotification({
+          title: 'Assessment Complete',
+          message: `Feasibility analysis for ${projectName || 'your project'} is ready!`,
+          type: 'success',
+          actionUrl: '/projects',
+          actionText: 'View Projects'
+        });
       }
       
     } catch (error) {
@@ -215,8 +229,48 @@ const FeasibilityCheck: React.FC = () => {
           type: 'error'
         });
       }
-    } finally {
-      // Loading state is handled in the polling logic above
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    if (!results) return;
+    
+    const reportData: ReportData = {
+      projectName: projectName || 'Rainwater Harvesting Assessment',
+      location: formData.location,
+      roofArea: formData.roofArea,
+      dwellers: formData.numDwellers,
+      harvestPotential: {
+        annualHarvest: results.harvestPotential,
+        annualRainfall: formData.annualRainfall,
+        waterQuality: 85,
+        runoffCoefficient: 0.8
+      },
+      structure: {
+        type: results.structureSpecs.type,
+        capacity: results.structureSpecs.capacity,
+        cost: results.structureSpecs.estimatedCost,
+        installationDays: results.structureSpecs.installationTime,
+        dimensions: results.structureSpecs.dimensions
+      },
+      costAnalysis: {
+        totalCost: results.structureSpecs.estimatedCost,
+        annualSavings: results.annualSavings,
+        paybackPeriod: results.paybackPeriod,
+        roi: (results.annualSavings / results.structureSpecs.estimatedCost) * 100
+      },
+      generatedAt: new Date().toLocaleDateString(),
+      userName: user?.full_name || 'User'
+    };
+    
+    await generatePDFReport(reportData);
+    
+    if (user) {
+      addNotification({
+        title: 'Report Downloaded',
+        message: 'Your detailed assessment report has been downloaded successfully.',
+        type: 'success'
+      });
     }
   };
 
@@ -230,61 +284,39 @@ const FeasibilityCheck: React.FC = () => {
             Your Rainwater Harvesting Assessment
           </h2>
           <p className="text-gray-600">
-            Based on your inputs, here's what we found:
+            AI-powered analysis of your rainwater harvesting potential
           </p>
         </div>
         
-        {/* Harvest Potential */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-blue-900 mb-4">💧 Harvest Potential</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-700">
-                {results.harvest.predictedHarvestLiters.toLocaleString()}L
-              </div>
-              <div className="text-sm text-blue-600">Annual Harvest</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-700">
-                {results.harvest.annualRainfall}mm
-              </div>
-              <div className="text-sm text-blue-600">Annual Rainfall</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-700">
-                {Math.round(results.harvest.waterQualityScore)}%
-              </div>
-              <div className="text-sm text-blue-600">Water Quality Score</div>
-            </div>
-          </div>
-        </div>
+        {/* Feasibility Score Card */}
+        <FeasibilityScoreCard recommendation={results.recommendation} />
         
-        {/* Structure Recommendation */}
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-green-900 mb-4">🏗️ Recommended Structure</h3>
+        {/* System Recommendation */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">🏗️ Recommended System</h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-lg font-medium text-green-800">
-                {getStructureDisplayName(results.structure.structureType)}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="text-lg font-medium text-green-800 mb-2">
+                {results.structureSpecs.type}
               </h4>
-              <span className={`text-sm font-semibold ${getSuitabilityColor(results.structure.suitabilityScore)}`}>
-                Suitability: {results.structure.suitabilityScore}%
-              </span>
+              <p className="text-green-700 text-sm">
+                Capacity: {results.structureSpecs.capacity.toLocaleString()} liters
+              </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p><strong>Capacity:</strong> {results.structure.tankCapacity.toLocaleString()} liters</p>
-                <p><strong>Installation Time:</strong> {results.structure.installationTimeDays} days</p>
-                <p><strong>Efficiency:</strong> {Math.round(results.structure.efficiencyRating * 100)}%</p>
-                <p><strong>Maintenance:</strong> {results.structure.maintenanceFrequency}</p>
+                <p><strong>Estimated Cost:</strong> ₹{results.structureSpecs.estimatedCost.toLocaleString()}</p>
+                <p><strong>Installation Time:</strong> {results.structureSpecs.installationTime} days</p>
+                <p><strong>Annual Maintenance:</strong> ₹{results.structureSpecs.maintenanceCost.toLocaleString()}</p>
+                <p><strong>Payback Period:</strong> {Math.round(results.paybackPeriod * 10) / 10} years</p>
               </div>
               <div>
                 <p><strong>Dimensions:</strong></p>
                 <ul className="ml-4 text-sm">
-                  <li>Length: {results.structure.dimensions.length}m</li>
-                  <li>Width: {results.structure.dimensions.width}m</li>
-                  <li>Height: {results.structure.dimensions.height}m</li>
+                  <li>Length: {results.structureSpecs.dimensions.length}m</li>
+                  <li>Width: {results.structureSpecs.dimensions.width}m</li>
+                  <li>Height: {results.structureSpecs.dimensions.height}m</li>
                 </ul>
               </div>
             </div>
@@ -292,15 +324,70 @@ const FeasibilityCheck: React.FC = () => {
             <div>
               <p><strong>Materials Required:</strong></p>
               <div className="flex flex-wrap gap-2 mt-2">
-                {results.structure.materials.map((material: string, index: number) => (
+                {results.structureSpecs.materials.map((material: string, index: number) => (
                   <span key={index} className="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs">
                     {material}
                   </span>
                 ))}
               </div>
             </div>
+            
+            {/* Alternative Options */}
+            {results.recommendation.alternativeOptions.length > 0 && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <h5 className="font-medium text-blue-900 mb-2">Alternative Options</h5>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  {results.recommendation.alternativeOptions.map((option: string, index: number) => (
+                    <li key={index}>• {option.replace(/_/g, ' ').toUpperCase()}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
+        
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-blue-50 p-6 rounded-lg text-center">
+            <Droplets className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+            <div className="text-2xl font-bold text-blue-700">
+              {Math.round(results.harvestPotential / 1000)}K L
+            </div>
+            <div className="text-sm text-blue-600">Annual Harvest Potential</div>
+          </div>
+          
+          <div className="bg-green-50 p-6 rounded-lg text-center">
+            <DollarSign className="h-12 w-12 text-green-600 mx-auto mb-4" />
+            <div className="text-2xl font-bold text-green-700">
+              ₹{Math.round(results.annualSavings / 1000)}K
+            </div>
+            <div className="text-sm text-green-600">Annual Water Savings</div>
+          </div>
+          
+          <div className="bg-purple-50 p-6 rounded-lg text-center">
+            <TrendingUp className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+            <div className="text-2xl font-bold text-purple-700">
+              {Math.round(results.paybackPeriod * 10) / 10} years
+            </div>
+            <div className="text-sm text-purple-600">Investment Payback</div>
+          </div>
+        </div>
+        
+        {/* What-If Simulator */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-900">Scenario Analysis</h3>
+          <button
+            onClick={() => setShowSimulator(!showSimulator)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Sliders className="h-4 w-4" />
+            <span>{showSimulator ? 'Hide' : 'Show'} Simulator</span>
+          </button>
+        </div>
+        
+        {showSimulator && (
+          <WhatIfSimulator baseInput={formData} />
+        )}
         
         {/* Environmental Impact */}
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-lg">
@@ -309,7 +396,7 @@ const FeasibilityCheck: React.FC = () => {
             <div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-700">
-                  {Math.round(results.harvest.predictedHarvestLiters / 1000)}K L
+                  {Math.round(results.harvestPotential / 1000)}K L
                 </div>
                 <div className="text-sm text-emerald-600">Water Conserved</div>
               </div>
@@ -317,7 +404,7 @@ const FeasibilityCheck: React.FC = () => {
             <div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-700">
-                  {results.cost.environmentalBenefit.split(' ')[0]}
+                  {Math.round(results.harvestPotential * 0.0003)}
                 </div>
                 <div className="text-sm text-emerald-600">kg CO₂ Saved</div>
               </div>
@@ -325,7 +412,7 @@ const FeasibilityCheck: React.FC = () => {
             <div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-700">
-                  {Math.round((results.harvest.predictedHarvestLiters / (formData.numDwellers * 150 * 365)) * 100)}%
+                  {Math.round((results.harvestPotential / formData.waterDemand) * 100)}%
                 </div>
                 <div className="text-sm text-emerald-600">Water Independence</div>
               </div>
@@ -333,39 +420,18 @@ const FeasibilityCheck: React.FC = () => {
           </div>
         </div>
         
-        {/* Cost Analysis */}
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-yellow-900 mb-4">💰 Cost Analysis</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                ₹{results.cost.totalCost.toLocaleString()}
-              </div>
-              <div className="text-sm text-yellow-600">Total Investment</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                ₹{results.cost.annualSavings.toLocaleString()}
-              </div>
-              <div className="text-sm text-yellow-600">Annual Savings</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                {results.cost.paybackPeriodYears} years
-              </div>
-              <div className="text-sm text-yellow-600">Payback Period</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                {results.cost.roiPercentage}%
-              </div>
-              <div className="text-sm text-yellow-600">Annual ROI</div>
-            </div>
-          </div>
-        </div>
-        
         {/* Call to Action */}
         <div className="bg-gray-50 p-6 rounded-lg text-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+            <button
+              onClick={handleDownloadReport}
+              className="flex items-center justify-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              <span>Download Detailed Report</span>
+            </button>
+          </div>
+          
           {user ? (
             <div className="space-y-4">
               <p className="text-gray-700">Ready to move forward with this project?</p>
@@ -375,12 +441,6 @@ const FeasibilityCheck: React.FC = () => {
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   View My Projects
-                </button>
-                <button
-                  onClick={() => navigate('/reports')}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Generate Detailed Report
                 </button>
               </div>
             </div>
@@ -405,6 +465,17 @@ const FeasibilityCheck: React.FC = () => {
               </div>
             </div>
           )}
+          
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h5 className="font-medium text-blue-900 mb-2">Next Steps</h5>
+            <ul className="text-sm text-blue-800 space-y-1 text-left max-w-md mx-auto">
+              <li>• Consult with local contractors for implementation</li>
+              <li>• Obtain necessary permits from local authorities</li>
+              <li>• Consider phased implementation for large systems</li>
+              <li>• Plan for regular maintenance and monitoring</li>
+              <li>• Explore government subsidies and incentives</li>
+            </ul>
+          </div>
         </div>
       </div>
     );
@@ -625,6 +696,24 @@ const FeasibilityCheck: React.FC = () => {
               </div>
             </div>
 
+            <div>
+              <label htmlFor="groundwaterDepth" className="block text-sm font-medium text-gray-700 mb-2">
+                Groundwater Depth (meters) *
+              </label>
+              <input
+                type="number"
+                id="groundwaterDepth"
+                name="groundwaterDepth"
+                required
+                min="1"
+                step="0.5"
+                value={formData.groundwaterDepth || ''}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., 15"
+              />
+            </div>
+
             <div className="text-center">
               <button
                 type="submit"
@@ -643,9 +732,11 @@ const FeasibilityCheck: React.FC = () => {
         {formData.location && (
           <div className="mt-12">
             <HydrogeologyInfo
-              latitude={coordinates.lat}
-              longitude={coordinates.lng}
+              latitude={formData.coordinates.lat}
+              longitude={formData.coordinates.lng}
               location={formData.location}
+              rainfallData={rainfallData}
+              groundwaterData={groundwaterData}
             />
           </div>
         )}

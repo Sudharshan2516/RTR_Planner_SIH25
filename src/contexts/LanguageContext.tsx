@@ -13,6 +13,7 @@ const translations = {
     // Navigation
     'nav.home': 'Home',
     'nav.quick_check': 'Quick Check',
+    'nav.feasibility': 'Feasibility Check',
     'nav.projects': 'My Projects',
     'nav.profile': 'Profile',
     'nav.contractor': 'Contractor Portal',
@@ -20,6 +21,7 @@ const translations = {
     'nav.login': 'Login',
     'nav.signup': 'Sign Up',
     'nav.logout': 'Logout',
+    'nav.notifications': 'Notifications',
     
     // Home page
     'home.hero.title': 'RainShare — Your Rooftop Rainwater Assistant',
@@ -43,6 +45,7 @@ const translations = {
     'quick.dwellers': 'Number of Dwellers',
     'quick.submit': 'Check Feasibility',
     'quick.geolocate': 'Use My Location',
+    'quick.groundwater_depth': 'Groundwater Depth (m)',
     
     // Results
     'result.feasibility': 'Feasibility',
@@ -52,6 +55,12 @@ const translations = {
     'result.medium': 'Medium',
     'result.low': 'Low',
     'result.register_cta': 'Register to Save & Get Full Report',
+    'result.ai_recommendation': 'AI Recommendation',
+    'result.confidence': 'Confidence Level',
+    'result.alternatives': 'Alternative Options',
+    'result.what_if': 'What-If Analysis',
+    'result.download_report': 'Download Report',
+    'result.environmental_impact': 'Environmental Impact',
     
     // Project Form
     'project.name': 'Project Name',
@@ -61,6 +70,12 @@ const translations = {
     'project.submit_predict': 'Submit for Prediction',
     'project.request_quote': 'Request Contractor Quote',
     'project.generate_pdf': 'Generate PDF Report',
+    
+    // Feasibility Scores
+    'feasibility.excellent': 'Excellent',
+    'feasibility.good': 'Good',
+    'feasibility.fair': 'Fair',
+    'feasibility.poor': 'Poor',
     
     // Common
     'common.loading': 'Loading...',
@@ -72,6 +87,8 @@ const translations = {
     'common.back': 'Back',
     'common.next': 'Next',
     'common.close': 'Close',
+    'common.view': 'View',
+    'common.edit': 'Edit',
     
     // Roof Types
     'roof.rcc': 'RCC/Concrete',
@@ -85,6 +102,14 @@ const translations = {
     'status.predicted': 'Predicted',
     'status.verified': 'Verified',
     'status.rejected': 'Rejected',
+    
+    // Reports
+    'report.annual_harvest': 'Annual Harvest',
+    'report.annual_savings': 'Annual Savings',
+    'report.payback_period': 'Payback Period',
+    'report.roi': 'Return on Investment',
+    'report.generating': 'Generating...',
+    'report.download': 'Download PDF',
     
     // Gamification
     'points.earned': 'Points Earned',
@@ -106,17 +131,28 @@ const translations = {
     'contractor.inbox': 'Project Requests',
     'contractor.respond_quote': 'Respond with Quote',
     
+    // Form Labels
+    'form.roof_area': 'Roof Area',
+    'form.dwellers': 'Number of People',
+    'form.available_space': 'Available Space',
+    'form.groundwater_depth': 'Groundwater Depth',
+    
     // Notifications
     'notif.ml_unavailable': 'ML service unavailable - showing rule-based result',
     'notif.low_confidence': 'Low confidence - request verification recommended',
     'notif.project_saved': 'Project saved successfully',
     'notif.quote_requested': 'Quote request sent to contractors',
-    'notif.pdf_generated': 'PDF report generated successfully'
+    'notif.pdf_generated': 'PDF report generated successfully',
+    'notification.mark_read': 'Mark as read',
+    'notification.mark_all_read': 'Mark all as read',
+    'notification.no_notifications': 'No notifications yet',
+    'notification.report_ready': 'Report Ready'
   },
   hindi: {
     // Navigation
     'nav.home': 'होम',
     'nav.quick_check': 'त्वरित जांच',
+    'nav.feasibility': 'व्यवहार्यता जांच',
     'nav.projects': 'मेरी परियोजनाएं',
     'nav.profile': 'प्रोफ़ाइल',
     'nav.contractor': 'ठेकेदार पोर्टल',
@@ -124,6 +160,7 @@ const translations = {
     'nav.login': 'लॉगिन',
     'nav.signup': 'साइन अप',
     'nav.logout': 'लॉगआउट',
+    'nav.notifications': 'सूचनाएं',
     
     // Home page
     'home.hero.title': 'रेनशेयर — आपका छत वर्षा जल सहायक',
@@ -147,6 +184,7 @@ const translations = {
     'quick.dwellers': 'निवासियों की संख्या',
     'quick.submit': 'व्यवहार्यता जांचें',
     'quick.geolocate': 'मेरा स्थान उपयोग करें',
+    'quick.groundwater_depth': 'भूजल गहराई (मीटर)',
     
     // Results
     'result.feasibility': 'व्यवहार्यता',
@@ -156,6 +194,12 @@ const translations = {
     'result.medium': 'मध्यम',
     'result.low': 'निम्न',
     'result.register_cta': 'पूर्ण रिपोर्ट सहेजने और प्राप्त करने के लिए पंजीकरण करें',
+    'result.ai_recommendation': 'AI सिफारिश',
+    'result.confidence': 'विश्वास स्तर',
+    'result.alternatives': 'वैकल्पिक विकल्प',
+    'result.what_if': 'क्या-यदि विश्लेषण',
+    'result.download_report': 'रिपोर्ट डाउनलोड करें',
+    'result.environmental_impact': 'पर्यावरणीय प्रभाव',
     
     // Common
     'common.loading': 'लोड हो रहा है...',
@@ -166,12 +210,21 @@ const translations = {
     'common.submit': 'जमा करें',
     'common.back': 'वापस',
     'common.next': 'अगला',
-    'common.close': 'बंद करें'
+    'common.close': 'बंद करें',
+    'common.view': 'देखें',
+    'common.edit': 'संपादित करें',
+    
+    // Form Labels
+    'form.roof_area': 'छत का क्षेत्रफल',
+    'form.dwellers': 'लोगों की संख्या',
+    'form.available_space': 'उपलब्ध स्थान',
+    'form.groundwater_depth': 'भूजल गहराई'
   },
   telugu: {
     // Navigation
     'nav.home': 'హోమ్',
     'nav.quick_check': 'త్వరిత తనిఖీ',
+    'nav.feasibility': 'సాధ్యత తనిఖీ',
     'nav.projects': 'నా ప్రాజెక్టులు',
     'nav.profile': 'ప్రొఫైల్',
     'nav.contractor': 'కాంట్రాక్టర్ పోర్టల్',
@@ -179,6 +232,7 @@ const translations = {
     'nav.login': 'లాగిన్',
     'nav.signup': 'సైన్ అప్',
     'nav.logout': 'లాగౌట్',
+    'nav.notifications': 'నోటిఫికేషన్లు',
     
     // Home page
     'home.hero.title': 'రెయిన్‌షేర్ — మీ పైకప్పు వర్షపు నీటి సహాయకుడు',
@@ -202,6 +256,7 @@ const translations = {
     'quick.dwellers': 'నివాసుల సంఖ్య',
     'quick.submit': 'సాధ్యత తనిఖీ చేయండి',
     'quick.geolocate': 'నా స్థానాన్ని ఉపయోగించండి',
+    'quick.groundwater_depth': 'భూగర్భ జల లోతు (మీటర్లు)',
     
     // Results
     'result.feasibility': 'సాధ్యత',
@@ -211,6 +266,12 @@ const translations = {
     'result.medium': 'మధ్యమ',
     'result.low': 'తక్కువ',
     'result.register_cta': 'పూర్తి నివేదికను సేవ్ చేయడానికి మరియు పొందడానికి నమోదు చేసుకోండి',
+    'result.ai_recommendation': 'AI సిఫార్సు',
+    'result.confidence': 'విశ్వాస స్థాయి',
+    'result.alternatives': 'ప్రత్యామ్నాయ ఎంపికలు',
+    'result.what_if': 'ఏమైతే విశ్లేషణ',
+    'result.download_report': 'నివేదిక డౌన్‌లోడ్ చేయండి',
+    'result.environmental_impact': 'పర్యావరణ ప్రభావం',
     
     // Common
     'common.loading': 'లోడ్ అవుతోంది...',
@@ -221,7 +282,15 @@ const translations = {
     'common.submit': 'సమర్పించండి',
     'common.back': 'వెనుకకు',
     'common.next': 'తదుపరి',
-    'common.close': 'మూసివేయండి'
+    'common.close': 'మూసివేయండి',
+    'common.view': 'చూడండి',
+    'common.edit': 'సవరించండి',
+    
+    // Form Labels
+    'form.roof_area': 'పైకప్పు వైశాల్యం',
+    'form.dwellers': 'వ్యక్తుల సంఖ్య',
+    'form.available_space': 'అందుబాటులో ఉన్న స్థలం',
+    'form.groundwater_depth': 'భూగర్భ జల లోతు'
   }
 };
 

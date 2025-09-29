@@ -39,18 +39,53 @@ interface HydrogeologyInfoProps {
   latitude: number;
   longitude: number;
   location: string;
+  rainfallData?: any;
+  groundwaterData?: any;
 }
 
-const HydrogeologyInfo: React.FC<HydrogeologyInfoProps> = ({ latitude, longitude, location }) => {
+const HydrogeologyInfo: React.FC<HydrogeologyInfoProps> = ({ 
+  latitude, 
+  longitude, 
+  location, 
+  rainfallData: providedRainfallData,
+  groundwaterData: providedGroundwaterData 
+}) => {
   const [hydroData, setHydroData] = useState<HydrogeologyData | null>(null);
   const [rainfallData, setRainfallData] = useState<RainfallData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchHydrogeologyData();
-    fetchRainfallData();
+    if (providedRainfallData && providedGroundwaterData) {
+      // Use provided data
+      setRainfallData(providedRainfallData);
+      setHydroData(transformGroundwaterData(providedGroundwaterData));
+      setLoading(false);
+    } else {
+      // Fetch data
+      fetchHydrogeologyData();
+      fetchRainfallData();
+    }
   }, [latitude, longitude, location]);
+
+  const transformGroundwaterData = (gwData: any): HydrogeologyData => {
+    return {
+      location,
+      coordinates: { lat: latitude, lng: longitude },
+      soilType: gwData.aquiferType || 'Medium Clay',
+      permeability: getPermeability(latitude, longitude),
+      groundwaterDepth: gwData.depth || 15,
+      aquiferType: gwData.aquiferType || 'Unconfined Aquifer',
+      rechargeRate: gwData.rechargeRate || 15,
+      waterQuality: gwData.quality || 'Good (TDS 300-600 mg/L)',
+      seasonalVariation: gwData.seasonalVariation || {
+        monsoon: gwData.depth - 2,
+        postMonsoon: gwData.depth - 1,
+        preMonsoon: gwData.depth + 1
+      },
+      recommendations: getRecommendations(latitude, longitude)
+    };
+  };
 
   const fetchHydrogeologyData = async () => {
     // Mock hydrogeology data based on location
