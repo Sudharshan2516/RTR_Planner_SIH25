@@ -19,6 +19,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import Projects from './pages/Projects';
 import Profile from './pages/Profile';
 
+// New Component
+import HydrogeologyInfo from './components/HydrogeologyInfo';
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -33,6 +36,9 @@ const App: React.FC = () => {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/feasibility" element={<FeasibilityCheck />} />
+
+                  {/* New Hydrogeology Route (open to everyone) */}
+                  <Route path="/hydro" element={<HydrogeologyInfo />} />
                   
                   {/* Protected Routes */}
                   <Route path="/dashboard" element={
