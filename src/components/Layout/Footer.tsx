@@ -32,10 +32,11 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li><Link to="/feasibility" className="text-gray-400 hover:text-white transition-colors">Feasibility Check</Link></li>
-              <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link></li>
-              <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
-              <li><Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/feasibility" className="text-gray-400 hover:text-white transition-colors text-sm">Feasibility Check</Link></li>
+              <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors text-sm">About Us</Link></li>
+              <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors text-sm">Contact</Link></li>
+              <li><Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">Terms of Service</Link></li>
             </ul>
           </div>
 
@@ -76,9 +77,9 @@ const Footer: React.FC = () => {
               © 2024 AquaHarvest. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Support</a>
+              <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">Terms</Link>
+              <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy</Link>
+              <Link to="/contact" className="text-gray-400 hover:text-white transition-colors text-sm">Support</Link>
             </div>
           </div>
         </div>
