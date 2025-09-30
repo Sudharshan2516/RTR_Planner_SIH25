@@ -18,6 +18,10 @@ import Reports from './pages/Reports';
 import AdminDashboard from './pages/AdminDashboard';
 import Projects from './pages/Projects';
 import Profile from './pages/Profile';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 
 // New Component
 import HydrogeologyInfo from './components/HydrogeologyInfo';
@@ -36,6 +40,12 @@ const App: React.FC = () => {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/feasibility" element={<FeasibilityCheck />} />
+                  
+                  {/* Public Pages */}
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
 
                   {/* New Hydrogeology Route (open to everyone) */}
                   <Route path="/hydro" element={<HydrogeologyInfo />} />

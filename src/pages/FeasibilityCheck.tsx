@@ -614,7 +614,7 @@ const FeasibilityCheck: React.FC = () => {
                         : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                     }`}
                   >
-                    Rainfall Layer
+                    🌧️ Rainfall Data
                   </button>
                   <button
                     type="button"
@@ -625,8 +625,13 @@ const FeasibilityCheck: React.FC = () => {
                         : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                     }`}
                   >
-                    Soil Layer
+                    🌱 Soil Data
                   </button>
+                  <div className="text-sm text-gray-600 flex items-center">
+                    <span className="bg-blue-50 px-2 py-1 rounded">
+                      Interactive layers show regional data patterns
+                    </span>
+                  </div>
                 </div>
               </div>
             )}

@@ -32,6 +32,7 @@ interface RainfallData {
   lng: number;
   rainfall: number;
   color: string;
+  region: string;
 }
 
 interface SoilData {
@@ -40,6 +41,7 @@ interface SoilData {
   soilType: string;
   permeability: string;
   color: string;
+  region: string;
 }
 
 // -------------------- Component --------------------
@@ -57,28 +59,198 @@ const GISMap: React.FC<GISMapProps> = ({
   const [soilData, setSoilData] = useState<SoilData[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  // -------------------- Data Mocking --------------------
+  // -------------------- Global Data Generation --------------------
   useEffect(() => {
     if (showRainfallData) {
-      setRainfallData([
-        { lat: 17.3850, lng: 78.4867, rainfall: 800, color: '#3B82F6' },
-        { lat: 17.4000, lng: 78.5000, rainfall: 1200, color: '#1D4ED8' },
-        { lat: 17.3700, lng: 78.4700, rainfall: 600, color: '#60A5FA' },
-        { lat: 17.4100, lng: 78.4900, rainfall: 900, color: '#2563EB' },
-        { lat: 17.3900, lng: 78.4800, rainfall: 1000, color: '#1E40AF' },
-      ]);
+      setRainfallData(generateGlobalRainfallData(mapCenter));
     }
 
     if (showSoilData) {
-      setSoilData([
-        { lat: 17.3850, lng: 78.4867, soilType: 'Clay', permeability: 'Low', color: '#DC2626' },
-        { lat: 17.4000, lng: 78.5000, soilType: 'Sandy Loam', permeability: 'High', color: '#16A34A' },
-        { lat: 17.3700, lng: 78.4700, soilType: 'Loam', permeability: 'Medium', color: '#D97706' },
-        { lat: 17.4100, lng: 78.4900, soilType: 'Sandy Clay', permeability: 'Medium', color: '#CA8A04' },
-        { lat: 17.3900, lng: 78.4800, soilType: 'Sand', permeability: 'High', color: '#059669' },
-      ]);
+      setSoilData(generateGlobalSoilData(mapCenter));
     }
-  }, [showRainfallData, showSoilData]);
+  }, [showRainfallData, showSoilData, mapCenter]);
+
+  // Generate rainfall data based on geographic location
+  const generateGlobalRainfallData = (center: [number, number]): RainfallData[] => {
+    const [centerLat, centerLng] = center;
+    const data: RainfallData[] = [];
+    
+    // Generate data points in a grid around the center
+    for (let i = -2; i <= 2; i++) {
+      for (let j = -2; j <= 2; j++) {
+        const lat = centerLat + (i * 0.1);
+        const lng = centerLng + (j * 0.1);
+        
+        // Estimate rainfall based on geographic location
+        let rainfall = estimateRainfallByLocation(lat, lng);
+        
+        // Add some variation
+        rainfall += (Math.random() - 0.5) * 200;
+        rainfall = Math.max(200, Math.min(3000, rainfall));
+        
+        const color = getRainfallColor(rainfall);
+        const region = getRegionName(lat, lng);
+        
+        data.push({ lat, lng, rainfall: Math.round(rainfall), color, region });
+      }
+    }
+    
+    return data;
+  };
+
+  // Generate soil data based on geographic location
+  const generateGlobalSoilData = (center: [number, number]): SoilData[] => {
+    const [centerLat, centerLng] = center;
+    const data: SoilData[] = [];
+    
+    // Generate data points in a grid around the center
+    for (let i = -2; i <= 2; i++) {
+      for (let j = -2; j <= 2; j++) {
+        const lat = centerLat + (i * 0.15);
+        const lng = centerLng + (j * 0.15);
+        
+        const soilInfo = estimateSoilByLocation(lat, lng);
+        const region = getRegionName(lat, lng);
+        
+        data.push({ 
+          lat, 
+          lng, 
+          soilType: soilInfo.type, 
+          permeability: soilInfo.permeability, 
+          color: soilInfo.color,
+          region 
+        });
+      }
+    }
+    
+    return data;
+  };
+
+  // Estimate rainfall based on geographic location in India
+  const estimateRainfallByLocation = (lat: number, lng: number): number => {
+    // Western Ghats and coastal areas - high rainfall
+    if ((lat >= 8 && lat <= 21 && lng >= 72 && lng <= 77) || // Western coast
+        (lat >= 8 && lat <= 12 && lng >= 75 && lng <= 77)) { // Kerala
+      return 2000 + Math.random() * 1000;
+    }
+    
+    // Northeast India - very high rainfall
+    if (lat >= 24 && lat <= 29 && lng >= 88 && lng <= 97) {
+      return 2500 + Math.random() * 1500;
+    }
+    
+    // Eastern coast - moderate to high rainfall
+    if (lat >= 11 && lat <= 22 && lng >= 79 && lng <= 87) {
+      return 1000 + Math.random() * 800;
+    }
+    
+    // Central India - moderate rainfall
+    if (lat >= 15 && lat <= 25 && lng >= 75 && lng <= 85) {
+      return 800 + Math.random() * 600;
+    }
+    
+    // Rajasthan and western dry areas - low rainfall
+    if (lat >= 24 && lat <= 30 && lng >= 68 && lng <= 78) {
+      return 300 + Math.random() * 400;
+    }
+    
+    // Deccan plateau - moderate rainfall
+    if (lat >= 12 && lat <= 20 && lng >= 74 && lng <= 80) {
+      return 600 + Math.random() * 500;
+    }
+    
+    // Default for other areas
+    return 800 + Math.random() * 400;
+  };
+
+  // Estimate soil type based on geographic location
+  const estimateSoilByLocation = (lat: number, lng: number) => {
+    // Alluvial soils - Gangetic plains and deltas
+    if ((lat >= 24 && lat <= 30 && lng >= 75 && lng <= 88) || // Gangetic plains
+        (lat >= 15 && lat <= 17 && lng >= 80 && lng <= 82)) { // Godavari delta
+      return {
+        type: Math.random() > 0.5 ? 'Alluvial' : 'Sandy Loam',
+        permeability: 'High',
+        color: '#16A34A'
+      };
+    }
+    
+    // Black cotton soil - Deccan plateau
+    if (lat >= 15 && lat <= 22 && lng >= 74 && lng <= 80) {
+      return {
+        type: 'Black Cotton',
+        permeability: 'Low',
+        color: '#1F2937'
+      };
+    }
+    
+    // Red soil - South India
+    if (lat >= 8 && lat <= 18 && lng >= 75 && lng <= 80) {
+      return {
+        type: 'Red Soil',
+        permeability: 'Medium',
+        color: '#DC2626'
+      };
+    }
+    
+    // Laterite soil - Western Ghats
+    if (lat >= 8 && lat <= 21 && lng >= 72 && lng <= 77) {
+      return {
+        type: 'Laterite',
+        permeability: 'Medium',
+        color: '#D97706'
+      };
+    }
+    
+    // Desert soil - Rajasthan
+    if (lat >= 24 && lat <= 30 && lng >= 68 && lng <= 78) {
+      return {
+        type: 'Sandy',
+        permeability: 'High',
+        color: '#F59E0B'
+      };
+    }
+    
+    // Mountain soil - Himalayas and hills
+    if (lat >= 28 && lat <= 35) {
+      return {
+        type: 'Mountain Soil',
+        permeability: 'Medium',
+        color: '#6B7280'
+      };
+    }
+    
+    // Default - mixed soil
+    return {
+      type: Math.random() > 0.5 ? 'Loam' : 'Clay Loam',
+      permeability: 'Medium',
+      color: '#CA8A04'
+    };
+  };
+
+  // Get color based on rainfall amount
+  const getRainfallColor = (rainfall: number): string => {
+    if (rainfall >= 2000) return '#1E40AF'; // Dark blue - very high
+    if (rainfall >= 1500) return '#2563EB'; // Blue - high
+    if (rainfall >= 1000) return '#3B82F6'; // Medium blue - moderate high
+    if (rainfall >= 600) return '#60A5FA';  // Light blue - moderate
+    if (rainfall >= 300) return '#93C5FD';  // Very light blue - low
+    return '#DBEAFE'; // Pale blue - very low
+  };
+
+  // Get region name based on coordinates
+  const getRegionName = (lat: number, lng: number): string => {
+    if (lat >= 28 && lat <= 35) return 'Northern India';
+    if (lat >= 24 && lat <= 28 && lng >= 68 && lng <= 78) return 'Rajasthan';
+    if (lat >= 24 && lat <= 30 && lng >= 75 && lng <= 88) return 'Gangetic Plains';
+    if (lat >= 22 && lat <= 28 && lng >= 88 && lng <= 97) return 'Northeast India';
+    if (lat >= 15 && lat <= 25 && lng >= 75 && lng <= 85) return 'Central India';
+    if (lat >= 15 && lat <= 22 && lng >= 74 && lng <= 80) return 'Deccan Plateau';
+    if (lat >= 8 && lat <= 18 && lng >= 75 && lng <= 80) return 'South India';
+    if (lat >= 8 && lat <= 21 && lng >= 72 && lng <= 77) return 'Western Ghats';
+    if (lat >= 11 && lat <= 22 && lng >= 79 && lng <= 87) return 'Eastern Coast';
+    return 'India';
+  };
 
   // -------------------- Map Click Handler --------------------
   const handleMapClick = async (e: L.LeafletMouseEvent) => {
@@ -210,8 +382,9 @@ const GISMap: React.FC<GISMapProps> = ({
             >
               <Popup>
                 <div className="text-center">
-                  <h4 className="font-semibold">Rainfall Data</h4>
-                  <p className="text-sm">Annual: {data.rainfall} mm</p>
+                  <h4 className="font-semibold">Rainfall Data - {data.region}</h4>
+                  <p className="text-sm">Annual Rainfall: {data.rainfall} mm</p>
+                  <p className="text-xs text-gray-600">Lat: {data.lat.toFixed(3)}, Lng: {data.lng.toFixed(3)}</p>
                 </div>
               </Popup>
             </Circle>
@@ -234,9 +407,10 @@ const GISMap: React.FC<GISMapProps> = ({
             >
               <Popup>
                 <div className="text-center">
-                  <h4 className="font-semibold">Soil Data</h4>
+                  <h4 className="font-semibold">Soil Data - {data.region}</h4>
                   <p className="text-sm">Type: {data.soilType}</p>
                   <p className="text-sm">Permeability: {data.permeability}</p>
+                  <p className="text-xs text-gray-600">Lat: {data.lat.toFixed(3)}, Lng: {data.lng.toFixed(3)}</p>
                 </div>
               </Popup>
             </Circle>
