@@ -17,6 +17,7 @@ import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import AdminDashboard from './pages/AdminDashboard';
 import Projects from './pages/Projects';
+import ContractorDashboard from './pages/ContractorDashboard';
 import Profile from './pages/Profile';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -100,12 +101,7 @@ const App: React.FC = () => {
                   <Route path="/contractor" element={
                     <ProtectedRoute>
                       <RoleGuard allowedRoles={['contractor']}>
-                        <div className="min-h-screen flex items-center justify-center">
-                          <div className="text-center">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contractor Dashboard</h2>
-                            <p className="text-gray-600">Contractor interface coming soon!</p>
-                          </div>
-                        </div>
+                        <ContractorDashboard />
                       </RoleGuard>
                     </ProtectedRoute>
                   } />

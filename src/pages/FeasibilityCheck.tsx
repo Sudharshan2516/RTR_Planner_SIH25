@@ -13,6 +13,7 @@ import HydrogeologyInfo from '../components/HydrogeologyInfo';
 import FeasibilityScoreCard from '../components/FeasibilityScoreCard';
 import WhatIfSimulator from '../components/WhatIfSimulator';
 import FieldVerificationWorkflow from '../components/FieldVerificationWorkflow';
+import ContractorRequestForm from '../components/ContractorRequestForm';
 
 const FeasibilityCheck: React.FC = () => {
   const { user } = useAuth();
@@ -49,6 +50,7 @@ const FeasibilityCheck: React.FC = () => {
   const [roofAreaUnit, setRoofAreaUnit] = useState<'sqm' | 'sqft'>('sqm');
   const [spaceUnit, setSpaceUnit] = useState<'sqm' | 'sqft'>('sqm');
   const [selectedMapLocation, setSelectedMapLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [showContractorForm, setShowContractorForm] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -845,6 +847,14 @@ const FeasibilityCheck: React.FC = () => {
                   <Download className="h-4 w-4" />
                   <span>Download Detailed Report</span>
                 </button>
+                
+                <button
+                  onClick={() => setShowContractorForm(true)}
+                  className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md transform hover:scale-105"
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Get Contractor Quotes</span>
+                </button>
               </div>
               
               {user ? (
@@ -893,6 +903,31 @@ const FeasibilityCheck: React.FC = () => {
               </div>
             </div>
           </div>
+          
+          {/* Contractor Request Form */}
+          {showContractorForm && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+                <ContractorRequestForm
+                  projectData={{
+                    projectName: projectName || 'Rainwater Harvesting Project',
+                    location: formData.location,
+                    roofArea: formData.roofArea,
+                    dwellers: formData.numDwellers,
+                    availableSpace: formData.availableSpace,
+                    roofType: formData.roofType,
+                    estimatedCost: results.structureSpecs.estimatedCost,
+                    harvestPotential: results.harvestPotential,
+                    coordinates: formData.coordinates
+                  }}
+                  onRequestSent={() => {
+                    setShowContractorForm(false);
+                  }}
+                  onCancel={() => setShowContractorForm(false)}
+                />
+              </div>
+            </div>
+          )}
         )}
       </div>
 

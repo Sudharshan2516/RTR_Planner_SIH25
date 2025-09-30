@@ -4,6 +4,7 @@ import { Plus, Calendar, MapPin, Users, Square, Eye, CreditCard as Edit, Trash2,
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import UserQuoteManagement from '../components/UserQuoteManagement';
 
 interface Project {
   id: string;
@@ -35,6 +36,7 @@ const Projects: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
+  const [showQuotes, setShowQuotes] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -274,6 +276,13 @@ const Projects: React.FC = () => {
                       <span>View</span>
                     </button>
                     <button
+                      onClick={() => setShowQuotes(project.id)}
+                      className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                    >
+                      <Users className="h-4 w-4" />
+                      <span>Quotes</span>
+                    </button>
+                    <button
                       onClick={() => setShowDeleteModal(project.id)}
                       className="px-3 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors"
                     >
@@ -368,6 +377,26 @@ const Projects: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+        {/* Quotes Management Modal */}
+        {showQuotes && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 shadow-lg rounded-md bg-white">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-medium text-gray-900">
+                  Contractor Quotes
+                </h3>
+                <button
+                  onClick={() => setShowQuotes(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <UserQuoteManagement projectRequestId={showQuotes} />
             </div>
           </div>
         )}
